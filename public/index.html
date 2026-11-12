@@ -62,6 +62,12 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 @keyframes spin { to { transform: rotate(360deg); } }
 .icon-btn { width: 44px; padding: 0; justify-content: center; }
 
+.tabs { display: flex; flex: none; background: var(--surface-2); border-radius: 12px; padding: 4px; }
+.tabs button { border: 0; background: none; height: 36px; padding: 0 14px; border-radius: 9px; font-weight: 600; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.tabs small { font-weight: 500; opacity: .7; margin-left: 4px; }
+.view[hidden] { display: none; }
+.tag.src-c { background: none; border: 1px solid currentColor; font-weight: 600; color: var(--info); }
 .wrap { max-width: 1280px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 24px; align-items: start; }
 
 /* fontes */
@@ -143,6 +149,8 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
   .wrap { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
   .top-in { padding: 10px 16px; flex-wrap: wrap; gap: 10px; }
   .brand b { display: none; }
+  .tabs { order: 2; flex: 1; }
+  .tabs button { flex: 1; padding: 0 8px; }
   .search { order: 3; flex-basis: 100%; }
   .top-in .btn.primary { margin-left: auto; }
   .filters { position: static; max-height: none; display: none; }
@@ -169,6 +177,7 @@ html.tv .more .desc { max-height: none; }
 
 /* navegadores antigos sem "gap" em flex: espaçamento por margem */
 html.no-gap .top-in > *, html.no-gap .sources > *, html.no-gap .head > * { margin-right: 12px; margin-bottom: 6px; }
+html.no-gap .tabs > * { margin: 0; }
 html.no-gap .chips > *, html.no-gap .tags > * { margin: 0 6px 6px 0; }
 html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap .switch > *, html.no-gap .field > *, html.no-gap .sort > *, html.no-gap .chip span > * { margin-right: 8px; }
 
@@ -181,6 +190,10 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <a class="brand" href="/" aria-label="Garimpo">
       <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M4 19 12 5l8 14z"/></svg></span><b>Garimpo</b>
     </a>
+    <div class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tabVagas" aria-selected="true" aria-controls="viewVagas">Vagas<small id="tabVagasN"></small></button>
+      <button role="tab" id="tabConcursos" aria-selected="false" aria-controls="viewConcursos">Concursos<small id="tabConcursosN"></small></button>
+    </div>
     <div class="search" id="searchBox">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Buscar: desenvolvedor junior, java jr, front-end…" autocomplete="off" aria-label="Buscar vagas">
@@ -197,7 +210,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap view" id="viewVagas">
   <div class="sources" id="sources" aria-live="polite"></div>
   <div class="notice" id="notice" hidden></div>
 
@@ -262,6 +275,56 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     </div>
     <div class="list" id="list"></div>
     <div class="pager"><button class="btn" id="moreBtn" hidden>Mostrar mais</button></div>
+  </section>
+</main>
+
+<main class="wrap view" id="viewConcursos" hidden>
+  <div class="sources" id="cSources" aria-live="polite"></div>
+  <div class="notice" id="cNotice" hidden></div>
+
+  <aside class="filters" id="cFilters" aria-label="Filtros de concursos">
+    <h2>Filtros <button class="link" id="cReset" title="TI, sem exigir superior, Porto Alegre e RS">Restaurar filtro</button></h2>
+    <div class="group">
+      <h3>Região</h3>
+      <div class="chips" data-cset="regiao">
+        <label class="chip"><input type="checkbox" value="poa"><span>Porto Alegre <small data-ccount="poa"></small></span></label>
+        <label class="chip"><input type="checkbox" value="rs"><span>Resto do RS <small data-ccount="rs"></small></span></label>
+        <label class="chip"><input type="checkbox" value="outro"><span>Outros estados <small data-ccount="outro"></small></span></label>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Tipo</h3>
+      <div class="chips" data-cset="tipo">
+        <label class="chip"><input type="checkbox" value="concurso"><span>Concurso <small data-ccount="concurso"></small></span></label>
+        <label class="chip"><input type="checkbox" value="processo-seletivo"><span>Processo seletivo <small data-ccount="processo-seletivo"></small></span></label>
+        <label class="chip"><input type="checkbox" value="estagio"><span>Estágio <small data-ccount="estagio"></small></span></label>
+        <label class="chip"><input type="checkbox" value="aprendiz"><span>Aprendiz <small data-ccount="aprendiz"></small></span></label>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Área e escolaridade</h3>
+      <label class="switch"><input type="checkbox" id="c_soTi"><div>Só área de TI<small>Concursos com cargo de informática/programação, ou estágios que aceitam cursos de TI.</small></div></label>
+      <label class="switch"><input type="checkbox" id="c_semSuperior"><div>Aceita ensino médio ou técnico<small>Esconde os que só têm vagas de nível superior.</small></div></label>
+    </div>
+    <div class="group">
+      <h3>Mais</h3>
+      <label class="switch"><input type="checkbox" id="c_comSalario"><div>Obrigatório informar salário ou bolsa</div></label>
+      <label class="switch"><input type="checkbox" id="c_soNovas"><div>Só novos desde a última atualização</div></label>
+    </div>
+    <div class="group">
+      <h3>Site</h3>
+      <div class="chips" data-cset="fonte" id="cFonte"></div>
+    </div>
+  </aside>
+
+  <section aria-label="Concursos">
+    <div class="head">
+      <h1 id="cCount">Concursos</h1>
+      <p id="cSub"></p>
+      <label class="sort">Ordenar <select id="cSort"><option value="prazo">prazo mais próximo</option><option value="salario">maior salário</option><option value="novas">novos primeiro</option></select></label>
+    </div>
+    <div class="list" id="cList"></div>
+    <div class="pager"><button class="btn" id="cMore" hidden>Mostrar mais</button></div>
   </section>
 </main>
 <footer class="foot" id="foot"></footer>
@@ -402,7 +465,7 @@ function render() {
 
   const el = $('#list');
   if (!DATA.jobs.length) {
-    el.innerHTML = `<div class="empty"><h3>Nenhuma vaga indexada ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar no Gupy, LinkedIn, InfoJobs, Glassdoor e Indeed. Leva uns 2 minutos.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>`;
+    el.innerHTML = `<div class="empty"><h3>Nenhuma vaga indexada ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar vagas (Gupy, LinkedIn, InfoJobs, Glassdoor) e concursos. Leva uns 2 minutos.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>`;
   } else if (!list.length) {
     el.innerHTML = `<div class="empty"><h3>Nada com esses filtros</h3><p>Tente desligar um dos filtros obrigatórios ou incluir o nível “Não diz”.</p><button class="btn" onclick="resetFilters()">Restaurar meu filtro</button></div>`;
   } else {
@@ -413,22 +476,24 @@ function render() {
   $('#moreBtn').textContent = `Mostrar mais ${Math.min(rest, 40)} de ${rest}`;
 }
 
-function renderSources(sources, running) {
-  const wrap = $('#sources');
+function renderSources(all, running) {
+  renderSourcesInto($('#sources'), $('#notice'), all.filter((s) => s.kind !== 'concursos'), running);
+  renderSourcesInto($('#cSources'), $('#cNotice'), all.filter((s) => s.kind === 'concursos'), running);
+}
+function renderSourcesInto(wrap, n, sources, running) {
   wrap.innerHTML = sources.map((s) => {
-    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? `${s.count} vagas` : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : '—';
+    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? String(s.count) : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : '—';
     return `<span class="src ${s.status}" title="${esc(s.message || '')}"><i></i><b>${esc(s.name)}</b><span>${esc(txt)}</span></span>`;
   }).join('') + `<span class="updated">${running ? 'Atualizando…' : DATA.updatedAt ? 'Atualizado em ' + new Date(DATA.updatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda não atualizado'}</span>`;
 
   const problems = running ? [] : sources.filter((s) => s.status === 'bloqueado' || s.status === 'erro');
-  const n = $('#notice');
   n.hidden = !problems.length;
   n.innerHTML = problems.map((s) => `<div><b>${esc(s.name)}:</b> ${esc(s.message)} ${(s.manualLinks || []).length ? 'Abrir a busca direto no site: ' + s.manualLinks.map((l) => `<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`).join('') : ''}</div>`).join('');
 }
 
 // ---------- controles ----------
 function syncControls() {
-  $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q);
+  if (TAB !== 'concursos') { $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q); }
   for (const set of ['local', 'nivel']) document.querySelectorAll(`[data-set="${set}"] input`).forEach((i) => (i.checked = F[set].includes(i.value)));
   document.querySelectorAll('#fonteChips input').forEach((i) => (i.checked = !F.fonte || F.fonte.includes(i.value)));
   for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'soNovas']) $('#' + id).checked = F[id];
@@ -438,8 +503,30 @@ function changed() { shown = 40; store.set('garimpo.filtros', F); render(); }
 function resetFilters() { F = { ...DEFAULTS }; syncControls(); changed(); }
 
 let typing;
-$('#q').addEventListener('input', (e) => { F.q = e.target.value; $('#searchBox').classList.toggle('has', !!F.q); clearTimeout(typing); typing = setTimeout(changed, 120); });
-$('#clearQ').onclick = () => { F.q = ''; syncControls(); changed(); $('#q').focus(); };
+let TAB = /[?&]aba=concursos/.test(location.search) ? 'concursos' : store.get('garimpo.aba', 'vagas');
+$('#q').addEventListener('input', (e) => {
+  const v = e.target.value;
+  $('#searchBox').classList.toggle('has', !!v);
+  clearTimeout(typing);
+  typing = setTimeout(() => { if (TAB === 'concursos') Concursos.setQuery(v); else { F.q = v; changed(); } }, 120);
+});
+$('#clearQ').onclick = () => {
+  $('#q').value = ''; $('#searchBox').classList.remove('has');
+  if (TAB === 'concursos') Concursos.setQuery(''); else { F.q = ''; changed(); }
+  $('#q').focus();
+};
+function showTab(tab) {
+  TAB = tab; store.set('garimpo.aba', tab);
+  const c = tab === 'concursos';
+  $('#viewVagas').hidden = c; $('#viewConcursos').hidden = !c;
+  $('#tabVagas').setAttribute('aria-selected', String(!c)); $('#tabConcursos').setAttribute('aria-selected', String(c));
+  const q = c ? Concursos.getQuery() : F.q;
+  $('#q').value = q; $('#searchBox').classList.toggle('has', !!q);
+  $('#q').placeholder = c ? 'Buscar: técnico em informática, prefeitura, banrisul…' : 'Buscar: desenvolvedor junior, java jr, front-end…';
+  $('#filters').classList.remove('show'); $('#cFilters').classList.remove('show');
+}
+$('#tabVagas').onclick = () => showTab('vagas');
+$('#tabConcursos').onclick = () => showTab('concursos');
 $('#reset').onclick = resetFilters;
 $('#filters').addEventListener('change', (e) => {
   const t = e.target, group = t.closest('[data-set]'), set = group ? group.dataset.set : null;
@@ -453,7 +540,7 @@ $('#filters').addEventListener('change', (e) => {
 $('#salMin').addEventListener('input', (e) => { F.salMin = e.target.value; changed(); });
 $('#sort').onchange = (e) => { F.sort = e.target.value; changed(); };
 $('#moreBtn').onclick = () => { shown += 40; render(); };
-$('#toggleFilters').onclick = () => $('#filters').classList.toggle('show');
+$('#toggleFilters').onclick = () => $(TAB === 'concursos' ? '#cFilters' : '#filters').classList.toggle('show');
 $('#theme').onclick = () => {
   const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark';
@@ -462,14 +549,21 @@ $('#theme').onclick = () => {
 const savedTheme = store.get('garimpo.tema', null);
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 
+</script>
+<script src="concursos.js"></script>
+<script>
 // ---------- dados ----------
 async function load() {
   DATA = await (await fetch('/api/jobs')).json();
   for (const j of DATA.jobs) { j._text = norm(j.title + ' ' + j.company); j._loc = locOf(j); }
-  $('#fonteChips').innerHTML = DATA.sources.map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
+  $('#fonteChips').innerHTML = DATA.sources.filter((s) => s.kind !== 'concursos').map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
   syncControls();
   renderSources(DATA.sources, false);
   render();
+  Concursos.setData(DATA);
+  $('#tabVagasN').textContent = DATA.jobs.length || '';
+  $('#tabConcursosN').textContent = (DATA.concursos || []).length || '';
+  showTab(TAB);
 }
 
 let polling = false;
