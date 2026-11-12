@@ -4,7 +4,7 @@
 // "desenvolvedor junior" nunca traz vaga pleno ou sênior.
 (function (root) {
   const norm = (s) =>
-    String(s ?? '')
+    String(s == null ? '' : s)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '');
@@ -47,7 +47,7 @@
   // job precisa ter .level e ._text (título + empresa já normalizados) ou title/company
   function matchesQuery(job, parsed) {
     if (parsed.levels.length && !parsed.levels.includes(job.level)) return false;
-    const text = job._text ?? norm(job.title + ' ' + job.company);
+    const text = job._text != null ? job._text : norm(job.title + ' ' + job.company);
     return parsed.terms.every((t) => (typeof t === 'string' ? text.includes(t) : t.test(text)));
   }
 

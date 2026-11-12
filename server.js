@@ -2,7 +2,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { refresh, getStatus, loadData } = require('./lib/refresh');
+
+// endereços deste computador na rede local, para abrir o site no celular ou na TV
+const lanUrls = () =>
+  Object.values(os.networkInterfaces())
+    .flat()
+    .filter((n) => n && n.family === 'IPv4' && !n.internal && !n.address.startsWith('169.254.'))
+    .map((n) => `http://${n.address}:${PORT}`);
 
 const PORT = Number(process.env.PORT) || 4321;
 const PUBLIC = path.join(__dirname, 'public');
@@ -17,6 +25,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/api/jobs' && req.method === 'GET') return json(res, 200, loadData());
   if (url.pathname === '/api/status' && req.method === 'GET') return json(res, 200, getStatus());
+  if (url.pathname === '/api/info' && req.method === 'GET') return json(res, 200, { urls: lanUrls() });
   if (url.pathname === '/api/refresh' && req.method === 'POST') {
     // dispara em segundo plano; o site acompanha por /api/status
     if (!getStatus().running) refresh().catch((e) => console.error('Falha na atualização:', e));
@@ -33,4 +42,8 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => console.log(`Vagas Dev rodando em http://localhost:${PORT}`));
+// escuta em toda a rede local para o celular e a TV conseguirem abrir
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Garimpo rodando em http://localhost:${PORT}`);
+  for (const u of lanUrls()) console.log(`No celular ou na TV (mesma rede): ${u}`);
+});
