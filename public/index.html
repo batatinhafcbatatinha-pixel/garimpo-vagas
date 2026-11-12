@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garimpo · vagas de dev júnior</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231f6f4a'/><path d='M9 21l7-11 7 11z' fill='%23f4efe4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4efe4; --surface: #fffdf8; --surface-2: #ebe4d4; --ink: #1c1a16; --muted: #6b6558; --line: #d9d0bd;
+  --accent: #1f6f4a; --accent-ink: #fffdf8; --accent-soft: #dcebdf;
+  --good: #1f6f4a; --good-bg: #dcebdf; --warn: #8a5a00; --warn-bg: #f6e6bf; --bad: #a3341f; --bad-bg: #f6dcd4; --info: #2b4f8c; --info-bg: #dde6f5;
+  --shadow: 0 1px 2px rgba(40,30,10,.06), 0 8px 24px -12px rgba(40,30,10,.18);
+  --gupy: #1b6fd1; --linkedin: #0a66c2; --infojobs: #e0531f; --glassdoor: #0a8f5b; --indeed: #2f3fb5;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14130f; --surface: #1d1b16; --surface-2: #29261f; --ink: #f0ebdf; --muted: #a39c8b; --line: #37332a;
+  --accent: #5fc48f; --accent-ink: #0f1a13; --accent-soft: #1e3327;
+  --good: #7ad3a3; --good-bg: #1e3327; --warn: #e9c46a; --warn-bg: #3a2f12; --bad: #f09a86; --bad-bg: #3d1f18; --info: #9db9ee; --info-bg: #1c2740;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
+  --gupy: #6fb0ff; --linkedin: #6cb1f0; --infojobs: #ff9163; --glassdoor: #5ed3a2; --indeed: #9aa5ff;
+} }
+:root[data-theme="dark"] {
+  --bg: #14130f; --surface: #1d1b16; --surface-2: #29261f; --ink: #f0ebdf; --muted: #a39c8b; --line: #37332a;
+  --accent: #5fc48f; --accent-ink: #0f1a13; --accent-soft: #1e3327;
+  --good: #7ad3a3; --good-bg: #1e3327; --warn: #e9c46a; --warn-bg: #3a2f12; --bad: #f09a86; --bad-bg: #3d1f18; --info: #9db9ee; --info-bg: #1c2740;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
+  --gupy: #6fb0ff; --linkedin: #6cb1f0; --infojobs: #ff9163; --glassdoor: #5ed3a2; --indeed: #9aa5ff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; margin: 0; letter-spacing: -.02em; }
+
+/* topo */
+.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1280px; margin: 0 auto; padding: 12px 20px; display: flex; gap: 16px; align-items: center; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; }
+.brand-mark svg { width: 18px; height: 18px; fill: var(--accent-ink); }
+.brand b { font: 800 20px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; }
+.search { flex: 1; position: relative; min-width: 0; }
+.search input { width: 100%; height: 44px; padding: 0 40px 0 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.search input::placeholder { color: var(--muted); }
+.search > svg { position: absolute; left: 14px; top: 13px; width: 18px; height: 18px; stroke: var(--muted); fill: none; stroke-width: 2; pointer-events: none; }
+.search .clear { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; border: 0; background: none; color: var(--muted); border-radius: 8px; font-size: 18px; display: none; }
+.search.has .clear { display: block; }
+.btn { height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex: none; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; box-shadow: var(--shadow); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.primary:disabled { opacity: .75; cursor: progress; }
+.btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.spin svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-btn { width: 44px; padding: 0; justify-content: center; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 24px; align-items: start; }
+
+/* fontes */
+.sources { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.src { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
+.src i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.src.ok i { background: var(--good); } .src.erro i, .src.bloqueado i { background: var(--bad); }
+.src.buscando i { background: var(--warn); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+.src b { font-weight: 600; } .src span { color: var(--muted); }
+.updated { margin-left: auto; color: var(--muted); font-size: 13px; }
+.notice { grid-column: 1 / -1; background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; }
+.notice a { font-weight: 600; margin-right: 12px; white-space: nowrap; }
+
+/* filtros */
+.filters { position: sticky; top: 86px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; max-height: calc(100vh - 106px); overflow: auto; }
+.filters h2 { font-size: 17px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font: 600 13px Inter, sans-serif; text-decoration: underline; text-underline-offset: 3px; }
+.group { padding: 14px 0; border-top: 1px solid var(--line); }
+.group h3 { font: 600 11.5px Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; }
+.chip span { display: inline-flex; gap: 6px; align-items: center; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; cursor: pointer; user-select: none; }
+.chip span small { color: var(--muted); font-size: 11.5px; }
+.chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip input:checked + span small { color: inherit; opacity: .75; }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip input:disabled + span { opacity: .45; cursor: not-allowed; }
+.switch { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+.switch input { appearance: none; flex: none; width: 36px; height: 20px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); position: relative; margin: 2px 0 0; cursor: pointer; transition: background .15s; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch input:checked { background: var(--accent); border-color: var(--accent); }
+.switch input:checked::after { transform: translateX(16px); background: var(--accent-ink); }
+.switch div { font-size: 14px; } .switch small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.field { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+.field input, .field select, .sort select { height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); padding: 0 8px; min-width: 0; }
+.field input { width: 110px; }
+.hint { margin-top: 8px; font-size: 12.5px; color: var(--info); background: var(--info-bg); padding: 6px 10px; border-radius: 8px; }
+
+/* resultados */
+.head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.head h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; }
+.head p { margin: 0; color: var(--muted); }
+.sort { margin-left: auto; font-size: 13.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.sort select { background: var(--surface); }
+.list { display: grid; gap: 12px; }
+.job { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 4px 14px; transition: box-shadow .15s, border-color .15s; }
+.job:hover { box-shadow: var(--shadow); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.logo { width: 44px; height: 44px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; font: 700 17px "Bricolage Grotesque", sans-serif; color: var(--muted); overflow: hidden; grid-row: span 2; }
+.logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.job h3 { font-size: 17.5px; font-weight: 700; line-height: 1.25; }
+.job h3 a { text-decoration: none; } .job h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.meta { color: var(--muted); font-size: 13.5px; grid-column: 2; }
+.meta b { color: var(--ink); font-weight: 500; }
+.when { font-size: 12.5px; color: var(--muted); text-align: right; white-space: nowrap; }
+.tags { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { font-size: 12.5px; font-weight: 500; padding: 3px 9px; border-radius: 7px; background: var(--surface-2); white-space: nowrap; }
+.tag.good { background: var(--good-bg); color: var(--good); } .tag.bad { background: var(--bad-bg); color: var(--bad); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); } .tag.info { background: var(--info-bg); color: var(--info); }
+.tag.money { background: var(--good); color: var(--surface); font-weight: 600; }
+.tag.new { background: var(--ink); color: var(--bg); font-weight: 600; }
+.tag.src-gupy { color: var(--gupy); } .tag.src-linkedin { color: var(--linkedin); } .tag.src-infojobs { color: var(--infojobs); } .tag.src-glassdoor { color: var(--glassdoor); } .tag.src-indeed { color: var(--indeed); }
+.tag[class*="src-"] { background: none; border: 1px solid currentColor; font-weight: 600; }
+.more { grid-column: 2 / -1; margin-top: 8px; }
+.more summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13.5px; list-style: none; display: inline-block; }
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: " ▾"; } .more[open] summary::after { content: " ▴"; }
+.more .edu { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; font-size: 13.5px; }
+.more .desc { margin: 10px 0 0; white-space: pre-line; color: var(--muted); font-size: 14px; max-height: 340px; overflow: auto; }
+.open { display: inline-flex; margin-top: 10px; font-weight: 600; color: var(--accent); }
+.empty { text-align: center; padding: 56px 20px; background: var(--surface); border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); }
+.empty h3 { color: var(--ink); font-size: 20px; margin-bottom: 6px; }
+.empty .btn { margin-top: 16px; }
+.pager { display: flex; justify-content: center; margin: 18px 0 40px; }
+.filters-toggle { display: none; }
+
+@media (max-width: 880px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+  .top-in { padding: 10px 16px; flex-wrap: wrap; gap: 10px; }
+  .brand b { display: none; }
+  .search { order: 3; flex-basis: 100%; }
+  .top-in .btn.primary { margin-left: auto; }
+  .filters { position: static; max-height: none; display: none; }
+  .filters.show { display: block; }
+  .filters-toggle { display: inline-flex; }
+  .updated { margin-left: 0; flex-basis: 100%; }
+  .notice a { white-space: normal; display: inline-block; }
+  .sort { margin-left: 0; }
+  .job h3 { overflow-wrap: anywhere; }
+  .job { grid-template-columns: 40px minmax(0, 1fr); padding: 14px; }
+  .logo { width: 40px; height: 40px; }
+  .when { grid-column: 2; text-align: left; }
+  .tags, .more { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="/" aria-label="Garimpo">
+      <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M4 19 12 5l8 14z"/></svg></span><b>Garimpo</b>
+    </a>
+    <div class="search" id="searchBox">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar: desenvolvedor junior, java jr, front-end…" autocomplete="off" aria-label="Buscar vagas">
+      <button class="clear" id="clearQ" aria-label="Limpar busca">×</button>
+    </div>
+    <button class="btn filters-toggle" id="toggleFilters">Filtros</button>
+    <button class="btn icon-btn" id="theme" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="btn primary" id="refresh">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+      <span id="refreshLabel">Atualizar vagas</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="sources" id="sources" aria-live="polite"></div>
+  <div class="notice" id="notice" hidden></div>
+
+  <aside class="filters" id="filters" aria-label="Filtros">
+    <h2>Filtros <button class="link" id="reset" title="Dev júnior, sem exigir superior, Porto Alegre ou remoto">Restaurar meu filtro</button></h2>
+
+    <div class="group">
+      <h3>Local</h3>
+      <div class="chips" data-set="local">
+        <label class="chip"><input type="checkbox" value="poa"><span>Porto Alegre <small data-count="poa"></small></span></label>
+        <label class="chip"><input type="checkbox" value="remoto"><span>Remoto Brasil <small data-count="remoto"></small></span></label>
+        <label class="chip"><input type="checkbox" value="metro"><span>Grande POA <small data-count="metro"></small></span></label>
+        <label class="chip"><input type="checkbox" value="outro"><span>Outros <small data-count="outro"></small></span></label>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Nível</h3>
+      <div class="chips" data-set="nivel">
+        <label class="chip"><input type="checkbox" value="junior"><span>Júnior / Jr <small data-count="junior"></small></span></label>
+        <label class="chip"><input type="checkbox" value="trainee"><span>Trainee <small data-count="trainee"></small></span></label>
+        <label class="chip"><input type="checkbox" value="estagio"><span>Estágio <small data-count="estagio"></small></span></label>
+        <label class="chip"><input type="checkbox" value="nao-informado"><span>Não diz <small data-count="nao-informado"></small></span></label>
+        <label class="chip"><input type="checkbox" value="pleno"><span>Pleno <small data-count="pleno"></small></span></label>
+        <label class="chip"><input type="checkbox" value="senior"><span>Sênior <small data-count="senior"></small></span></label>
+      </div>
+      <div class="hint" id="levelHint" hidden></div>
+    </div>
+
+    <div class="group">
+      <h3>Escolaridade</h3>
+      <label class="switch"><input type="checkbox" id="semSuperior"><div>Sem exigir ensino superior<small>Esconde vagas que pedem graduação (completa ou cursando).</small></div></label>
+      <label class="switch"><input type="checkbox" id="exigeMedioTecnico"><div>Obrigatório citar ensino médio ou técnico<small>Só vagas que dizem com todas as letras que aceitam médio ou técnico.</small></div></label>
+    </div>
+
+    <div class="group">
+      <h3>Salário</h3>
+      <label class="switch"><input type="checkbox" id="comSalario"><div>Obrigatório informar o salário<small>Só vagas em que a empresa diz quanto paga.</small></div></label>
+      <div class="field"><label for="salMin">A partir de R$</label><input id="salMin" type="number" min="0" step="500" placeholder="ex.: 2500" inputmode="numeric"></div>
+    </div>
+
+    <div class="group">
+      <h3>Mais</h3>
+      <label class="switch"><input type="checkbox" id="soDev"><div>Só vagas de desenvolvimento / TI<small>Tira jovem aprendiz, vendas e afins que vêm junto nas buscas.</small></div></label>
+      <label class="switch"><input type="checkbox" id="soNovas"><div>Só novas desde a última atualização</div></label>
+      <div class="field"><label for="dias">Publicadas</label>
+        <select id="dias"><option value="0">em qualquer data</option><option value="3">nos últimos 3 dias</option><option value="7">nos últimos 7 dias</option><option value="15">nos últimos 15 dias</option><option value="30">nos últimos 30 dias</option></select>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Site</h3>
+      <div class="chips" data-set="fonte" id="fonteChips"></div>
+    </div>
+  </aside>
+
+  <section aria-label="Vagas">
+    <div class="head">
+      <h1 id="count">Vagas</h1>
+      <p id="sub"></p>
+      <label class="sort">Ordenar <select id="sort"><option value="recentes">mais recentes</option><option value="salario">maior salário</option><option value="novas">novas primeiro</option></select></label>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="pager"><button class="btn" id="moreBtn" hidden>Mostrar mais</button></div>
+  </section>
+</main>
+
+<script src="search.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const { norm, parseQuery, matchesQuery } = JobSearch;
+
+// ---------- estado ----------
+const DEFAULTS = {
+  q: '', local: ['poa', 'remoto'], nivel: ['junior'], fonte: null, // null = todos os sites
+  semSuperior: true, exigeMedioTecnico: false, comSalario: false, salMin: '', soDev: true, soNovas: false, dias: '0', sort: 'recentes',
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+let F = { ...DEFAULTS, ...store.get('garimpo.filtros', {}) };
+let DATA = { jobs: [], sources: [], updatedAt: null, previousUpdate: null };
+let shown = 40;
+
+const LEVEL_LABEL = { junior: 'Júnior', trainee: 'Trainee', estagio: 'Estágio', pleno: 'Pleno', senior: 'Sênior', 'nao-informado': 'Nível não informado' };
+const SRC_LABEL = { gupy: 'Gupy', linkedin: 'LinkedIn', infojobs: 'InfoJobs', glassdoor: 'Glassdoor', indeed: 'Indeed' };
+const EDU = {
+  superior: ['Exige superior', 'bad'], medio: ['Ensino médio', 'good'], tecnico: ['Técnico', 'good'], 'medio-tecnico': ['Médio ou técnico', 'good'],
+  'superior-opcional': ['Superior é só diferencial', 'info'], 'nao-menciona': ['Não cita escolaridade', ''],
+};
+const MODE = { remote: 'Remoto', hybrid: 'Híbrido', onsite: 'Presencial' };
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const safeUrl = (u) => (/^https:\/\//.test(u || '') ? u : '#');
+
+// ---------- filtro ----------
+const locOf = (j) => { const l = []; if (j.isPoa) l.push('poa'); if (j.isRemote) l.push('remoto'); if (j.isMetro) l.push('metro'); if (!l.length) l.push('outro'); return l; };
+const isNew = (j) => DATA.previousUpdate && j.firstSeen > DATA.previousUpdate;
+
+// Aplica todos os filtros, menos o grupo `skip` (usado para as contagens de cada opção).
+function passes(j, parsed, skip) {
+  if (!matchesQuery(j, { terms: parsed.terms, levels: [] })) return false;
+  if (skip !== 'nivel') {
+    const levels = parsed.levels.length ? parsed.levels : F.nivel;
+    if (!levels.includes(j.level)) return false;
+  }
+  if (skip !== 'local' && !j._loc.some((l) => F.local.includes(l))) return false;
+  if (skip !== 'fonte' && F.fonte && !F.fonte.includes(j.source) && !(j.alsoOn || []).some((s) => F.fonte.includes(s))) return false;
+  if (F.soDev && !j.isDev) return false;
+  if (F.semSuperior && j.edu.exigeSuperior) return false;
+  if (F.exigeMedioTecnico && !(j.edu.medio || j.edu.tecnico)) return false;
+  if (F.comSalario && !j.salary.informado) return false;
+  if (F.salMin && !(j.salary.informado && j.salary.max >= Number(F.salMin))) return false;
+  if (F.soNovas && !isNew(j)) return false;
+  if (Number(F.dias) && !(j.publishedAt && Date.now() - new Date(j.publishedAt) <= Number(F.dias) * 864e5)) return false;
+  return true;
+}
+
+function sortJobs(a) {
+  const t = (j) => (j.publishedAt ? +new Date(j.publishedAt) : 0);
+  if (F.sort === 'salario') return a.sort((x, y) => (y.salary.max || 0) - (x.salary.max || 0) || t(y) - t(x));
+  if (F.sort === 'novas') return a.sort((x, y) => isNew(y) - isNew(x) || t(y) - t(x));
+  return a.sort((x, y) => t(y) - t(x));
+}
+
+// ---------- render ----------
+function ago(iso) {
+  if (!iso) return '';
+  const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
+  if (d <= 0) return 'hoje'; if (d === 1) return 'ontem'; if (d < 30) return `há ${d} dias`;
+  const m = Math.floor(d / 30); return m === 1 ? 'há 1 mês' : `há ${m} meses`;
+}
+
+function card(j) {
+  const [eduLabel, eduCls] = EDU[j.edu.resumo] || EDU['nao-menciona'];
+  const tags = [
+    isNew(j) ? '<span class="tag new">Nova</span>' : '',
+    j.salary.informado ? `<span class="tag money">${esc(j.salary.texto)}</span>` : '',
+    `<span class="tag ${j.level === 'junior' ? 'info' : ''}">${LEVEL_LABEL[j.level]}</span>`,
+    `<span class="tag ${eduCls}">${eduLabel}</span>`,
+    j.workMode ? `<span class="tag">${MODE[j.workMode]}</span>` : '',
+    `<span class="tag src-${j.source}">${SRC_LABEL[j.source]}</span>`,
+    ...(j.alsoOn || []).map((s) => `<span class="tag src-${s}" title="Também publicada no ${SRC_LABEL[s]}">+ ${SRC_LABEL[s]}</span>`),
+  ].join('');
+  const logo = j.logo && /^https:\/\//.test(j.logo)
+    ? `<img src="${esc(j.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${esc((j.company || '?')[0].toUpperCase()).replace(/['\\]/g, '')}'))">`
+    : esc((j.company || '?')[0].toUpperCase());
+  return `<article class="job">
+    <div class="logo">${logo}</div>
+    <h3><a href="${esc(safeUrl(j.url))}" target="_blank" rel="noopener noreferrer">${esc(j.title)}</a></h3>
+    <div class="when">${ago(j.publishedAt)}</div>
+    <div class="meta"><b>${esc(j.company)}</b> · ${esc(j.location || 'Local não informado')}</div>
+    <div class="tags">${tags}</div>
+    <details class="more"><summary>Detalhes</summary>
+      ${j.edu.trecho && j.edu.resumo !== 'nao-menciona' ? `<p class="edu"><b>Escolaridade na vaga:</b> “${esc(j.edu.trecho)}”</p>` : ''}
+      ${j.description ? `<p class="desc">${esc(j.description)}</p>` : '<p class="desc">Sem descrição disponível nesta fonte — abra a vaga para ler os requisitos.</p>'}
+      <a class="open" href="${esc(safeUrl(j.url))}" target="_blank" rel="noopener noreferrer">Abrir vaga no ${SRC_LABEL[j.source]} ↗</a>
+    </details>
+  </article>`;
+}
+
+function render() {
+  const parsed = parseQuery(F.q);
+  const list = sortJobs(DATA.jobs.filter((j) => passes(j, parsed)));
+
+  $('#count').textContent = list.length === 1 ? '1 vaga' : `${list.length} vagas`;
+  $('#sub').textContent = DATA.jobs.length ? `de ${DATA.jobs.length} indexadas` : '';
+
+  // contagens por opção: quantas vagas apareceriam com aquela opção marcada
+  const counts = {};
+  for (const j of DATA.jobs) {
+    if (passes(j, parsed, 'local')) for (const l of j._loc) counts[l] = (counts[l] || 0) + 1;
+    if (passes(j, parsed, 'nivel')) counts[j.level] = (counts[j.level] || 0) + 1;
+    if (passes(j, parsed, 'fonte')) for (const s of new Set([j.source, ...(j.alsoOn || [])])) counts['src-' + s] = (counts['src-' + s] || 0) + 1;
+  }
+  document.querySelectorAll('[data-count]').forEach((el) => (el.textContent = counts[el.dataset.count] || 0));
+
+  // nível digitado na busca manda nos botões de nível
+  const hint = $('#levelHint');
+  const fromSearch = parsed.levels.length > 0;
+  document.querySelectorAll('[data-set="nivel"] input').forEach((i) => {
+    i.disabled = fromSearch;
+    i.checked = (fromSearch ? parsed.levels : F.nivel).includes(i.value);
+  });
+  hint.hidden = !fromSearch;
+  if (fromSearch) hint.textContent = `Nível definido pela busca: só ${parsed.levels.map((l) => LEVEL_LABEL[l].toLowerCase()).join(' ou ')}.`;
+
+  const el = $('#list');
+  if (!DATA.jobs.length) {
+    el.innerHTML = `<div class="empty"><h3>Nenhuma vaga indexada ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar no Gupy, LinkedIn, InfoJobs, Glassdoor e Indeed. Leva uns 2 minutos.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>`;
+  } else if (!list.length) {
+    el.innerHTML = `<div class="empty"><h3>Nada com esses filtros</h3><p>Tente desligar um dos filtros obrigatórios ou incluir o nível “Não diz”.</p><button class="btn" onclick="resetFilters()">Restaurar meu filtro</button></div>`;
+  } else {
+    el.innerHTML = list.slice(0, shown).map(card).join('');
+  }
+  const rest = list.length - shown;
+  $('#moreBtn').hidden = rest <= 0;
+  $('#moreBtn').textContent = `Mostrar mais ${Math.min(rest, 40)} de ${rest}`;
+}
+
+function renderSources(sources, running) {
+  const wrap = $('#sources');
+  wrap.innerHTML = sources.map((s) => {
+    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? `${s.count} vagas` : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : '—';
+    return `<span class="src ${s.status}" title="${esc(s.message || '')}"><i></i><b>${esc(s.name)}</b><span>${esc(txt)}</span></span>`;
+  }).join('') + `<span class="updated">${running ? 'Atualizando…' : DATA.updatedAt ? 'Atualizado em ' + new Date(DATA.updatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda não atualizado'}</span>`;
+
+  const problems = running ? [] : sources.filter((s) => s.status === 'bloqueado' || s.status === 'erro');
+  const n = $('#notice');
+  n.hidden = !problems.length;
+  n.innerHTML = problems.map((s) => `<div><b>${esc(s.name)}:</b> ${esc(s.message)} ${(s.manualLinks || []).length ? 'Abrir a busca direto no site: ' + s.manualLinks.map((l) => `<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`).join('') : ''}</div>`).join('');
+}
+
+// ---------- controles ----------
+function syncControls() {
+  $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q);
+  for (const set of ['local', 'nivel']) document.querySelectorAll(`[data-set="${set}"] input`).forEach((i) => (i.checked = F[set].includes(i.value)));
+  document.querySelectorAll('#fonteChips input').forEach((i) => (i.checked = !F.fonte || F.fonte.includes(i.value)));
+  for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'soNovas']) $('#' + id).checked = F[id];
+  $('#salMin').value = F.salMin; $('#dias').value = F.dias; $('#sort').value = F.sort;
+}
+function changed() { shown = 40; store.set('garimpo.filtros', F); render(); }
+function resetFilters() { F = { ...DEFAULTS }; syncControls(); changed(); }
+
+let typing;
+$('#q').addEventListener('input', (e) => { F.q = e.target.value; $('#searchBox').classList.toggle('has', !!F.q); clearTimeout(typing); typing = setTimeout(changed, 120); });
+$('#clearQ').onclick = () => { F.q = ''; syncControls(); changed(); $('#q').focus(); };
+$('#reset').onclick = resetFilters;
+$('#filters').addEventListener('change', (e) => {
+  const t = e.target, set = t.closest('[data-set]')?.dataset.set;
+  if (set) {
+    const vals = [...t.closest('[data-set]').querySelectorAll('input:checked')].map((i) => i.value);
+    F[set] = set === 'fonte' && vals.length === t.closest('[data-set]').querySelectorAll('input').length ? null : vals;
+  } else if (t.type === 'checkbox') F[t.id] = t.checked;
+  else F[t.id] = t.value;
+  changed();
+});
+$('#salMin').addEventListener('input', (e) => { F.salMin = e.target.value; changed(); });
+$('#sort').onchange = (e) => { F.sort = e.target.value; changed(); };
+$('#moreBtn').onclick = () => { shown += 40; render(); };
+$('#toggleFilters').onclick = () => $('#filters').classList.toggle('show');
+$('#theme').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next; store.set('garimpo.tema', next);
+};
+const savedTheme = store.get('garimpo.tema', null);
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+
+// ---------- dados ----------
+async function load() {
+  DATA = await (await fetch('/api/jobs')).json();
+  for (const j of DATA.jobs) { j._text = norm(j.title + ' ' + j.company); j._loc = locOf(j); }
+  $('#fonteChips').innerHTML = DATA.sources.map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
+  syncControls();
+  renderSources(DATA.sources, false);
+  render();
+}
+
+let polling = false;
+function setBusy(b) {
+  const btn = $('#refresh');
+  btn.disabled = b; btn.classList.toggle('spin', b);
+  $('#refreshLabel').textContent = b ? 'Atualizando…' : 'Atualizar vagas';
+}
+async function poll() {
+  if (polling) return; polling = true; setBusy(true);
+  try {
+    for (;;) {
+      const st = await (await fetch('/api/status')).json();
+      renderSources(st.sources, st.running);
+      if (!st.running) break;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    await load();
+  } catch {
+    $('#notice').hidden = false;
+    $('#notice').textContent = 'Perdi a conexão com o servidor local. Confira se a janela do "Garimpo" continua aberta e recarregue a página.';
+  } finally { polling = false; setBusy(false); }
+}
+async function startRefresh() {
+  if (polling) return;
+  setBusy(true);
+  try { await fetch('/api/refresh', { method: 'POST' }); } catch {}
+  await new Promise((r) => setTimeout(r, 300));
+  poll();
+}
+$('#refresh').onclick = startRefresh;
+
+load().then(async () => {
+  // se uma atualização já estiver rodando (ex.: página recarregada no meio), acompanha
+  const st = await (await fetch('/api/status')).json();
+  if (st.running) poll();
+});
+</script>
+</body>
+</html>
