@@ -21,6 +21,7 @@
 
   function passes(c, terms, skip) {
     if (closed(c)) return false;
+    if (Applied.has(c.id)) return false; // já me inscrevi: só aparece na aba Candidaturas
     for (var i = 0; i < terms.length; i++) if (c._text.indexOf(terms[i]) === -1) return false;
     if (skip !== 'regiao' && F.regiao.indexOf(c._regiao) === -1) return false;
     if (skip !== 'tipo' && F.tipo.indexOf(c._tipo) === -1) return false;
@@ -46,6 +47,7 @@
     var d = daysLeft(c);
     if (c.situacao === 'em-breve' && c.inscricaoDe) return '<span class="tag info">Abre em ' + fmtDate(c.inscricaoDe) + (c.inscricaoAte ? ' · até ' + fmtDate(c.inscricaoAte) : '') + '</span>';
     if (d === null) return '<span class="tag">' + (c.situacao === 'em-andamento' ? 'Em andamento' : c.situacao === 'aberta' ? 'Inscrições abertas' : 'Prazo não informado') + '</span>';
+    if (d < 0) return '<span class="tag">Inscrições encerradas em ' + fmtDate(c.inscricaoAte) + '</span>';
     var quando = d <= 0 ? 'último dia' : d === 1 ? 'falta 1 dia' : 'faltam ' + d + ' dias';
     return '<span class="tag ' + (d <= 5 ? 'bad' : d <= 15 ? 'warn' : 'good') + '">Inscrições até ' + fmtDate(c.inscricaoAte) + ' · ' + quando + '</span>';
   }
@@ -54,7 +56,9 @@
     var niveis = [c.niveis.fundamental && 'Fundamental', c.niveis.medio && 'Médio', c.niveis.tecnico && 'Técnico', c.niveis.superior && 'Superior'].filter(Boolean).join(' / ');
     var tiList = (c.cargosTi && c.cargosTi.length ? c.cargosTi : c.cursosTi || []);
     var local = c.city ? c.city + ' · ' + c.uf : c.uf === 'BR' ? 'UF não informada' : c.uf;
+    var done = Applied.has(c.id);
     var tags = [
+      done ? '<span class="tag done">Inscrição marcada em ' + Applied.day(c.id) + '</span>' : '',
       isNew(c) ? '<span class="tag new">Novo</span>' : '',
       prazoTag(c),
       c.salary.informado ? '<span class="tag money">até ' + esc(c.salary.texto) + '</span>' : '',
@@ -63,12 +67,13 @@
       niveis ? '<span class="tag ' + (c.semSuperior ? 'good' : 'bad') + '">' + niveis + '</span>' : '<span class="tag">Escolaridade no edital</span>',
       c.vagasText ? '<span class="tag">' + esc(c.vagasText) + '</span>' : '',
       '<span class="tag src-c">' + SRC[c.source] + '</span>',
+      '<button class="apply" data-apply="' + esc(c.id) + '">' + (done ? 'Desfazer' : 'Já me inscrevi') + '</button>',
     ].join('');
     var first = (c.title || '?').replace(/^(prefeitura|c[aâ]mara|munic[ií]pio)\s+(municipal\s+)?(de\s+vereadores\s+)?(de\s+|do\s+|da\s+)?/i, '')[0] || '?';
     var logo = c.logo && /^https:\/\//.test(c.logo)
       ? '<img src="' + esc(c.logo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">'
       : esc(first.toUpperCase());
-    return '<article class="job">' +
+    return '<article class="job' + (done ? ' applied' : '') + '">' +
       '<div class="logo">' + logo + '</div>' +
       '<h3><a href="' + esc(safeUrl(c.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a></h3>' +
       '<div class="when">' + esc(local) + '</div>' +
@@ -151,6 +156,8 @@
     },
     setQuery: function (q) { F.q = q; changed(); },
     getQuery: function () { return F.q; },
+    render: render,
+    card: card,
     reset: function () { F = Object.assign({}, DEFAULTS); $('#q').value = ''; $('#searchBox').classList.remove('has'); sync(); changed(); },
   };
 })();

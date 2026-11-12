@@ -66,7 +66,8 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 .tabs button { border: 0; background: none; height: 36px; padding: 0 14px; border-radius: 9px; font-weight: 600; color: var(--muted); }
 .tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 .tabs small { font-weight: 500; opacity: .7; margin-left: 4px; }
-.view[hidden] { display: none; }
+.view[hidden], .btn[hidden] { display: none; }
+.wrap.one { grid-template-columns: minmax(0, 1fr); max-width: 920px; }
 .tag.src-c { background: none; border: 1px solid currentColor; font-weight: 600; color: var(--info); }
 .wrap { max-width: 1280px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 24px; align-items: start; }
 
@@ -132,6 +133,12 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 .tag.new { background: var(--ink); color: var(--bg); font-weight: 600; }
 .tag.src-gupy { color: var(--gupy); } .tag.src-linkedin { color: var(--linkedin); } .tag.src-infojobs { color: var(--infojobs); } .tag.src-glassdoor { color: var(--glassdoor); } .tag.src-indeed { color: var(--indeed); }
 .tag[class*="src-"] { background: none; border: 1px solid currentColor; font-weight: 600; }
+.apply { margin-left: auto; height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.apply:hover { border-color: var(--accent); background: var(--accent-soft); }
+.tag.done { background: var(--ink); color: var(--bg); font-weight: 600; }
+/* já me candidatei: fica apagada, só na aba Candidaturas */
+.job.applied { background: var(--surface-2); }
+.job.applied .logo, .job.applied h3, .job.applied .meta, .job.applied .when, .job.applied .tag:not(.done) { filter: grayscale(1); opacity: .6; }
 .more { grid-column: 2 / -1; margin-top: 8px; }
 .more summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13.5px; list-style: none; display: inline-block; }
 .more summary::-webkit-details-marker { display: none; }
@@ -150,7 +157,8 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
   .top-in { padding: 10px 16px; flex-wrap: wrap; gap: 10px; }
   .brand b { display: none; }
   .tabs { order: 2; flex: 1; }
-  .tabs button { flex: 1; padding: 0 8px; }
+  .tabs { flex-basis: 100%; }
+  .tabs button { flex: 1; padding: 0 6px; font-size: 14px; }
   .search { order: 3; flex-basis: 100%; }
   .top-in .btn.primary { margin-left: auto; }
   .filters { position: static; max-height: none; display: none; }
@@ -193,6 +201,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <div class="tabs" role="tablist" aria-label="Seções">
       <button role="tab" id="tabVagas" aria-selected="true" aria-controls="viewVagas">Vagas<small id="tabVagasN"></small></button>
       <button role="tab" id="tabConcursos" aria-selected="false" aria-controls="viewConcursos">Concursos<small id="tabConcursosN"></small></button>
+      <button role="tab" id="tabCandidaturas" aria-selected="false" aria-controls="viewCandidaturas">Candidaturas<small id="tabCandidaturasN"></small></button>
     </div>
     <div class="search" id="searchBox">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -327,6 +336,15 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <div class="pager"><button class="btn" id="cMore" hidden>Mostrar mais</button></div>
   </section>
 </main>
+<main class="wrap one view" id="viewCandidaturas" hidden>
+  <section aria-label="Candidaturas">
+    <div class="head">
+      <h1 id="aCount">Candidaturas</h1>
+      <p id="aSub"></p>
+    </div>
+    <div class="list" id="aList"></div>
+  </section>
+</main>
 <footer class="foot" id="foot"></footer>
 
 <script>
@@ -360,6 +378,14 @@ let F = { ...DEFAULTS, ...store.get('garimpo.filtros', {}) };
 let DATA = { jobs: [], sources: [], updatedAt: null, previousUpdate: null };
 let shown = 40;
 
+// Candidaturas: id -> { at, kind: 'vaga' | 'concurso', item }. Salvo no servidor, vale em todos os aparelhos.
+const Applied = {
+  map: {},
+  has: (id) => Object.prototype.hasOwnProperty.call(Applied.map, id),
+  day: (id) => new Date(Applied.map[id].at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+};
+let AQ = ''; // busca dentro da aba Candidaturas
+
 const LEVEL_LABEL = { junior: 'Júnior', trainee: 'Trainee', estagio: 'Estágio', pleno: 'Pleno', senior: 'Sênior', 'nao-informado': 'Nível não informado' };
 const SRC_LABEL = { gupy: 'Gupy', linkedin: 'LinkedIn', infojobs: 'InfoJobs', glassdoor: 'Glassdoor', indeed: 'Indeed' };
 const EDU = {
@@ -377,6 +403,7 @@ const isNew = (j) => DATA.previousUpdate && j.firstSeen > DATA.previousUpdate;
 
 // Aplica todos os filtros, menos o grupo `skip` (usado para as contagens de cada opção).
 function passes(j, parsed, skip) {
+  if (Applied.has(j.id)) return false; // já me candidatei: só aparece na aba Candidaturas
   if (!matchesQuery(j, { terms: parsed.terms, levels: [] })) return false;
   if (skip !== 'nivel') {
     const levels = parsed.levels.length ? parsed.levels : F.nivel;
@@ -411,7 +438,9 @@ function ago(iso) {
 
 function card(j) {
   const [eduLabel, eduCls] = EDU[j.edu.resumo] || EDU['nao-menciona'];
+  const done = Applied.has(j.id);
   const tags = [
+    done ? `<span class="tag done">Candidatura em ${Applied.day(j.id)}</span>` : '',
     isNew(j) ? '<span class="tag new">Nova</span>' : '',
     j.salary.informado ? `<span class="tag money">${esc(j.salary.texto)}</span>` : '',
     `<span class="tag ${j.level === 'junior' ? 'info' : ''}">${LEVEL_LABEL[j.level]}</span>`,
@@ -419,11 +448,12 @@ function card(j) {
     j.workMode ? `<span class="tag">${MODE[j.workMode]}</span>` : '',
     `<span class="tag src-${j.source}">${SRC_LABEL[j.source]}</span>`,
     ...(j.alsoOn || []).map((s) => `<span class="tag src-${s}" title="Também publicada no ${SRC_LABEL[s]}">+ ${SRC_LABEL[s]}</span>`),
+    `<button class="apply" data-apply="${esc(j.id)}">${done ? 'Desfazer' : 'Já me candidatei'}</button>`,
   ].join('');
   const logo = j.logo && /^https:\/\//.test(j.logo)
     ? `<img src="${esc(j.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${esc((j.company || '?')[0].toUpperCase()).replace(/['\\]/g, '')}'))">`
     : esc((j.company || '?')[0].toUpperCase());
-  return `<article class="job">
+  return `<article class="job${done ? ' applied' : ''}">
     <div class="logo">${logo}</div>
     <h3><a href="${esc(safeUrl(j.url))}" target="_blank" rel="noopener noreferrer">${esc(j.title)}</a></h3>
     <div class="when">${ago(j.publishedAt)}</div>
@@ -476,6 +506,39 @@ function render() {
   $('#moreBtn').textContent = `Mostrar mais ${Math.min(rest, 40)} de ${rest}`;
 }
 
+function renderApplied() {
+  const live = new Map([...DATA.jobs, ...(DATA.concursos || [])].map((x) => [x.id, x]));
+  const all = Object.keys(Applied.map)
+    .map((id) => ({ ...Applied.map[id], item: live.get(id) || Applied.map[id].item }))
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const words = norm(AQ).split(' ').filter(Boolean);
+  const list = all.filter((a) => { const t = norm([a.item.title, a.item.company, a.item.cargos].join(' ')); return words.every((w) => t.includes(w)); });
+
+  $('#tabCandidaturasN').textContent = all.length || '';
+  $('#aCount').textContent = all.length === 1 ? '1 candidatura' : `${all.length} candidaturas`;
+  $('#aSub').textContent = !all.length ? '' : list.length !== all.length ? `${list.length} com essa busca` : 'Saem das outras abas e ficam guardadas aqui, mesmo depois que a vaga sai do ar.';
+  $('#aList').innerHTML = !all.length
+    ? '<div class="empty"><h3>Nenhuma candidatura marcada</h3><p>Quando se candidatar a uma vaga ou se inscrever em um concurso, clique em <b>Já me candidatei</b> no cartão. Ela sai da lista e vem para cá.</p></div>'
+    : !list.length ? '<div class="empty"><h3>Nenhuma candidatura com essa busca</h3></div>'
+    : list.map((a) => (a.kind === 'concurso' ? Concursos.card(a.item) : card(a.item))).join('');
+}
+
+async function toggleApplied(id) {
+  try {
+    const r = await fetch('/api/applied', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, applied: !Applied.has(id) }) });
+    if (!r.ok) throw new Error(r.status);
+    Applied.map = (await r.json()).applied;
+  } catch {
+    alert('Não consegui salvar. Confira se a janela do "Garimpo" continua aberta e tente de novo.');
+    return;
+  }
+  render(); Concursos.render(); renderApplied();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-apply]');
+  if (b) toggleApplied(b.dataset.apply);
+});
+
 function renderSources(all, running) {
   renderSourcesInto($('#sources'), $('#notice'), all.filter((s) => s.kind !== 'concursos'), running);
   renderSourcesInto($('#cSources'), $('#cNotice'), all.filter((s) => s.kind === 'concursos'), running);
@@ -493,7 +556,7 @@ function renderSourcesInto(wrap, n, sources, running) {
 
 // ---------- controles ----------
 function syncControls() {
-  if (TAB !== 'concursos') { $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q); }
+  if (TAB === 'vagas') { $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q); }
   for (const set of ['local', 'nivel']) document.querySelectorAll(`[data-set="${set}"] input`).forEach((i) => (i.checked = F[set].includes(i.value)));
   document.querySelectorAll('#fonteChips input').forEach((i) => (i.checked = !F.fonte || F.fonte.includes(i.value)));
   for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'soNovas']) $('#' + id).checked = F[id];
@@ -504,29 +567,43 @@ function resetFilters() { F = { ...DEFAULTS }; syncControls(); changed(); }
 
 let typing;
 let TAB = /[?&]aba=concursos/.test(location.search) ? 'concursos' : store.get('garimpo.aba', 'vagas');
+function setQuery(v) {
+  if (TAB === 'concursos') Concursos.setQuery(v);
+  else if (TAB === 'candidaturas') { AQ = v; renderApplied(); }
+  else { F.q = v; changed(); }
+}
 $('#q').addEventListener('input', (e) => {
   const v = e.target.value;
   $('#searchBox').classList.toggle('has', !!v);
   clearTimeout(typing);
-  typing = setTimeout(() => { if (TAB === 'concursos') Concursos.setQuery(v); else { F.q = v; changed(); } }, 120);
+  typing = setTimeout(() => setQuery(v), 120);
 });
 $('#clearQ').onclick = () => {
   $('#q').value = ''; $('#searchBox').classList.remove('has');
-  if (TAB === 'concursos') Concursos.setQuery(''); else { F.q = ''; changed(); }
+  clearTimeout(typing); setQuery('');
   $('#q').focus();
 };
 function showTab(tab) {
+  const TABS = {
+    vagas: ['Vagas', 'Buscar: desenvolvedor junior, java jr, front-end…'],
+    concursos: ['Concursos', 'Buscar: técnico em informática, prefeitura, banrisul…'],
+    candidaturas: ['Candidaturas', 'Buscar nas minhas candidaturas…'],
+  };
+  if (!TABS[tab]) tab = 'vagas';
   TAB = tab; store.set('garimpo.aba', tab);
-  const c = tab === 'concursos';
-  $('#viewVagas').hidden = c; $('#viewConcursos').hidden = !c;
-  $('#tabVagas').setAttribute('aria-selected', String(!c)); $('#tabConcursos').setAttribute('aria-selected', String(c));
-  const q = c ? Concursos.getQuery() : F.q;
+  for (const t in TABS) {
+    $('#view' + TABS[t][0]).hidden = t !== tab;
+    $('#tab' + TABS[t][0]).setAttribute('aria-selected', String(t === tab));
+  }
+  const q = tab === 'concursos' ? Concursos.getQuery() : tab === 'candidaturas' ? AQ : F.q;
   $('#q').value = q; $('#searchBox').classList.toggle('has', !!q);
-  $('#q').placeholder = c ? 'Buscar: técnico em informática, prefeitura, banrisul…' : 'Buscar: desenvolvedor junior, java jr, front-end…';
+  $('#q').placeholder = TABS[tab][1];
+  $('#toggleFilters').hidden = tab === 'candidaturas';
   $('#filters').classList.remove('show'); $('#cFilters').classList.remove('show');
 }
 $('#tabVagas').onclick = () => showTab('vagas');
 $('#tabConcursos').onclick = () => showTab('concursos');
+$('#tabCandidaturas').onclick = () => showTab('candidaturas');
 $('#reset').onclick = resetFilters;
 $('#filters').addEventListener('change', (e) => {
   const t = e.target, group = t.closest('[data-set]'), set = group ? group.dataset.set : null;
@@ -555,12 +632,14 @@ if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 // ---------- dados ----------
 async function load() {
   DATA = await (await fetch('/api/jobs')).json();
+  Applied.map = DATA.applied || {};
   for (const j of DATA.jobs) { j._text = norm(j.title + ' ' + j.company); j._loc = locOf(j); }
   $('#fonteChips').innerHTML = DATA.sources.filter((s) => s.kind !== 'concursos').map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
   syncControls();
   renderSources(DATA.sources, false);
   render();
   Concursos.setData(DATA);
+  renderApplied();
   $('#tabVagasN').textContent = DATA.jobs.length || '';
   $('#tabConcursosN').textContent = (DATA.concursos || []).length || '';
   showTab(TAB);
