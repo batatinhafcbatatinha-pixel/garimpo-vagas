@@ -4,7 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { refresh, getStatus, loadData } = require('./lib/refresh');
-const applied = require('./lib/applied').createStore();
+const { createStore } = require('./lib/applied');
+const applied = createStore();
+// vagas escondidas: mesmo formato das candidaturas, em outro arquivo
+const hidden = createStore(path.join(__dirname, 'data', 'escondidas.json'));
 
 // lê um corpo JSON pequeno (o servidor fica aberto na rede local, então limita o tamanho)
 const readBody = (req) =>
@@ -36,12 +39,15 @@ const json = (res, code, body) => {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
-  if (url.pathname === '/api/jobs' && req.method === 'GET') return json(res, 200, { ...loadData(), applied: applied.load() });
-  if (url.pathname === '/api/applied' && req.method === 'POST') {
+  if (url.pathname === '/api/jobs' && req.method === 'GET') return json(res, 200, { ...loadData(), applied: applied.load(), hidden: hidden.load() });
+  // POST /api/applied { id, applied } e POST /api/hidden { id, hidden }: marca ou desmarca
+  const marks = { '/api/applied': ['applied', applied], '/api/hidden': ['hidden', hidden] };
+  if (marks[url.pathname] && req.method === 'POST') {
+    const [key, st] = marks[url.pathname];
     return readBody(req).then((body) => {
       if (!body || typeof body.id !== 'string' || !body.id || body.id.length > 300) return json(res, 400, { error: 'pedido inválido' });
-      const map = applied.set(body.id, body.applied !== false, loadData());
-      return map ? json(res, 200, { applied: map }) : json(res, 404, { error: 'vaga não encontrada' });
+      const map = st.set(body.id, body[key] !== false, loadData());
+      return map ? json(res, 200, { [key]: map }) : json(res, 404, { error: 'vaga não encontrada' });
     });
   }
   if (url.pathname === '/api/status' && req.method === 'GET') return json(res, 200, getStatus());

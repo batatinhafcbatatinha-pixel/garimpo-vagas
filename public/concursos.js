@@ -1,5 +1,5 @@
 // Aba "Concursos": concursos públicos, processos seletivos e estágios em órgãos públicos na área de TI.
-// Usa os utilitários globais definidos em index.html ($, esc, safeUrl, store) e JobSearch.norm.
+// Usa os utilitários globais definidos em index.html ($, esc, safeUrl, store, Applied, Hidden, actions) e JobSearch.norm.
 (function () {
   var norm = JobSearch.norm;
   var DEFAULTS = { q: '', regiao: ['poa', 'rs'], tipo: ['concurso', 'processo-seletivo', 'estagio', 'aprendiz'], fonte: null, soTi: true, semSuperior: true, comSalario: false, soNovas: false, sort: 'prazo' };
@@ -21,7 +21,7 @@
 
   function passes(c, terms, skip) {
     if (closed(c)) return false;
-    if (Applied.has(c.id)) return false; // já me inscrevi: só aparece na aba Candidaturas
+    if (Applied.has(c.id) || Hidden.has(c.id)) return false; // só aparece nas abas Candidaturas / Escondidas
     for (var i = 0; i < terms.length; i++) if (c._text.indexOf(terms[i]) === -1) return false;
     if (skip !== 'regiao' && F.regiao.indexOf(c._regiao) === -1) return false;
     if (skip !== 'tipo' && F.tipo.indexOf(c._tipo) === -1) return false;
@@ -57,8 +57,10 @@
     var tiList = (c.cargosTi && c.cargosTi.length ? c.cargosTi : c.cursosTi || []);
     var local = c.city ? c.city + ' · ' + c.uf : c.uf === 'BR' ? 'UF não informada' : c.uf;
     var done = Applied.has(c.id);
+    var hid = Hidden.has(c.id);
     var tags = [
       done ? '<span class="tag done">Inscrição marcada em ' + Applied.day(c.id) + '</span>' : '',
+      hid ? '<span class="tag done">Escondido em ' + Hidden.day(c.id) + '</span>' : '',
       isNew(c) ? '<span class="tag new">Novo</span>' : '',
       prazoTag(c),
       c.salary.informado ? '<span class="tag money">até ' + esc(c.salary.texto) + '</span>' : '',
@@ -67,13 +69,13 @@
       niveis ? '<span class="tag ' + (c.semSuperior ? 'good' : 'bad') + '">' + niveis + '</span>' : '<span class="tag">Escolaridade no edital</span>',
       c.vagasText ? '<span class="tag">' + esc(c.vagasText) + '</span>' : '',
       '<span class="tag src-c">' + SRC[c.source] + '</span>',
-      '<button class="apply" data-apply="' + esc(c.id) + '">' + (done ? 'Desfazer' : 'Já me inscrevi') + '</button>',
+      actions(c.id, 'Já me inscrevi'),
     ].join('');
     var first = (c.title || '?').replace(/^(prefeitura|c[aâ]mara|munic[ií]pio)\s+(municipal\s+)?(de\s+vereadores\s+)?(de\s+|do\s+|da\s+)?/i, '')[0] || '?';
     var logo = c.logo && /^https:\/\//.test(c.logo)
       ? '<img src="' + esc(c.logo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">'
       : esc(first.toUpperCase());
-    return '<article class="job' + (done ? ' applied' : '') + '">' +
+    return '<article class="job' + (done || hid ? ' applied' : '') + '">' +
       '<div class="logo">' + logo + '</div>' +
       '<h3><a href="' + esc(safeUrl(c.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a></h3>' +
       '<div class="when">' + esc(local) + '</div>' +

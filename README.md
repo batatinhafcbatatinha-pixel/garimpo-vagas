@@ -36,6 +36,15 @@ A busca ignora acentos, trata "junior", "júnior" e "jr" como a mesma coisa, e b
 
 A cada atualização, vagas que saíram dos sites e concursos com inscrições encerradas somem da lista.
 
+## Candidaturas e vagas escondidas
+
+Cada cartão tem dois botões:
+
+- **Já me candidatei** (ou **Já me inscrevi**): a vaga sai das listas e vai para a aba **Candidaturas**.
+- **Esconder**: tira da lista uma vaga que não interessa. Ela fica na aba **Escondidas**, de onde volta com **Mostrar de novo**.
+
+As duas listas ficam salvas no servidor (`data/candidaturas.json` e `data/escondidas.json`), então valem no computador, no celular e na TV.
+
 O site também abre no celular e na TV pela rede local; o endereço aparece no rodapé.
 
 ## Limites
@@ -43,7 +52,7 @@ O site também abre no celular e na TV pela rede local; o endereço aparece no r
 - No PCI Concursos, escolaridade e salário valem para o concurso inteiro, não só para o cargo de TI.
 
 - O Indeed bloqueia buscas automáticas; o site oferece links para abrir a busca direto lá.
-- O Glassdoor só entrega a primeira página de cada busca e um resumo da descrição.
+- O Glassdoor recusa navegador automatizado e o cliente HTTP do Node, então é buscado pelo `curl` (vem no Windows 10+). Lê até 5 páginas por busca e a descrição completa pelas APIs internas que o próprio site usa; até 500 descrições novas por atualização, o resto vem na seguinte.
 - Nível, escolaridade e salário são deduzidos do texto da vaga e podem errar.
 - As buscas (termos e cidade) ficam no topo de cada arquivo em `sources/`.
 
