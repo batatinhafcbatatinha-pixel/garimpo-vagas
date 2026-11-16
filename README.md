@@ -51,7 +51,7 @@ O site também abre no celular e na TV pela rede local; o endereço aparece no r
 
 - No PCI Concursos, escolaridade e salário valem para o concurso inteiro, não só para o cargo de TI.
 
-- O Indeed bloqueia buscas automáticas; o site oferece links para abrir a busca direto lá.
+- O Indeed recusa clientes HTTP comuns, então é buscado pelo Edge (ou Chrome) em modo headless, sem abrir janela. Cada busca leva uns 7 s. Sem navegador instalado ou se o Indeed bloquear mesmo assim, o site oferece links para abrir a busca direto lá.
 - O Glassdoor recusa navegador automatizado e o cliente HTTP do Node, então é buscado pelo `curl` (vem no Windows 10+). Lê até 5 páginas por busca e a descrição completa pelas APIs internas que o próprio site usa; até 500 descrições novas por atualização, o resto vem na seguinte.
 - Nível, escolaridade e salário são deduzidos do texto da vaga e podem errar.
 - As buscas (termos e cidade) ficam no topo de cada arquivo em `sources/`.

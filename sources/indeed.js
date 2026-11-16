@@ -1,7 +1,8 @@
-// Indeed: o site responde com uma verificação anti-robô (HTTP 403) para acessos automáticos.
-// Tentamos a busca normal; se vier bloqueio, a fonte é marcada como bloqueada e o site
+// Indeed: recusa clientes HTTP comuns (HTTP 403, verificação anti-robô), mas libera a página
+// para um navegador de verdade. Por isso a busca é feita pelo Edge/Chrome em modo headless
+// (ver browserHtml em lib/http). Se nem assim der, a fonte é marcada como bloqueada e o site
 // oferece links para abrir a busca do Indeed já filtrada no navegador.
-const { fetchText, htmlToText, decodeEntities } = require('../lib/http');
+const { fetchText, browserHtml, findBrowser, htmlToText, decodeEntities } = require('../lib/http');
 
 const SEARCHES = [
   { q: 'desenvolvedor junior', l: 'Porto Alegre, RS' },
@@ -13,10 +14,28 @@ const searchUrl = (s) =>
   `https://br.indeed.com/jobs?q=${encodeURIComponent(s.q)}&l=${encodeURIComponent(s.l)}&sort=date` +
   (s.remote ? '&sc=' + encodeURIComponent('0kf:attr(DSQF7);') : '');
 
+// Extrai o objeto JSON que começa em `start` contando chaves (ignorando as que estão dentro de strings).
+function sliceJson(text, start) {
+  let depth = 0;
+  let inStr = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (c === '\\') i++;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return text.slice(start, i + 1);
+  }
+  return null;
+}
+
 function parse(html, s) {
-  const m = html.match(/window\.mosaic\.providerData\["mosaic-provider-jobcards"\]\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
-  if (!m) return [];
-  const results = JSON.parse(m[1])?.metaData?.mosaicProviderJobCardsModel?.results || [];
+  const at = html.indexOf('providerData["mosaic-provider-jobcards"]');
+  if (at < 0) return null; // página sem a lista de vagas (bloqueio ou layout novo)
+  const json = sliceJson(html, html.indexOf('{', at));
+  if (!json) return null;
+  const results = JSON.parse(json)?.metaData?.mosaicProviderJobCardsModel?.results || [];
   return results.map((r) => ({
     source: 'indeed',
     sourceId: r.jobkey,
@@ -32,16 +51,24 @@ function parse(html, s) {
   }));
 }
 
+async function getPage(url) {
+  if (findBrowser()) return browserHtml(url);
+  return fetchText(url, { retries: 0 }); // sem navegador: tenta direto (costuma dar 403)
+}
+
 module.exports = {
   id: 'indeed',
   name: 'Indeed',
+  parse,
   manualLinks: SEARCHES.map((s) => ({ label: `${s.q} · ${s.remote ? 'remoto' : 'Porto Alegre'}`, url: searchUrl(s) })),
   async fetchJobs(progress) {
     const jobs = [];
     let blocked = 0;
     for (const [i, s] of SEARCHES.entries()) {
       try {
-        jobs.push(...parse(await fetchText(searchUrl(s), { retries: 0 }), s));
+        const found = parse(await getPage(searchUrl(s)), s);
+        if (found) jobs.push(...found);
+        else blocked++;
       } catch (e) {
         if (e.status === 403) blocked++;
         else throw e;
@@ -49,7 +76,11 @@ module.exports = {
       progress(`${i + 1}/${SEARCHES.length} buscas`);
     }
     if (blocked === SEARCHES.length) {
-      const err = new Error('O Indeed bloqueia buscas automáticas (verificação anti-robô).');
+      const err = new Error(
+        findBrowser()
+          ? 'O Indeed bloqueou as buscas automáticas (verificação anti-robô).'
+          : 'O Indeed bloqueia buscas automáticas; instale o Edge ou o Chrome para buscar por ele.'
+      );
       err.blocked = true;
       throw err;
     }
