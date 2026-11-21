@@ -79,6 +79,15 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 .src.buscando i { background: var(--warn); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
 .src b { font-weight: 600; } .src span { color: var(--muted); }
+/* fontes viram botões: verdinhas = entram na próxima atualização */
+button.src { font: inherit; color: var(--ink); cursor: pointer; min-height: 32px; }
+button.src:hover { border-color: var(--muted); }
+button.src.sel { background: var(--good-bg); border-color: var(--good); }
+button.src:not(.sel) { opacity: .6; }
+button.src:focus-visible { outline: 2px solid var(--good); outline-offset: 2px; }
+.src.parado i { background: var(--muted); }
+.btn:disabled:not(.spin) { opacity: .5; cursor: not-allowed; }
+.src-hint { font-size: 12px; color: var(--muted); }
 .updated { margin-left: auto; color: var(--muted); font-size: 13px; }
 .notice { grid-column: 1 / -1; background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; }
 .notice a { font-weight: 600; margin-right: 12px; white-space: nowrap; }
@@ -231,6 +240,10 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <button class="btn filters-toggle" id="toggleFilters">Filtros</button>
     <button class="btn icon-btn" id="theme" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro">
       <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="btn" id="stopRefresh" hidden title="Parar a atualização; o que já terminou é salvo">
+      <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      <span id="stopLabel">Parar</span>
     </button>
     <button class="btn primary" id="refresh">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
@@ -619,15 +632,43 @@ document.addEventListener('click', (e) => {
   if (h) return Hidden.toggle(h.dataset.hide);
 });
 
+// Fontes escolhidas para atualizar. Guarda as DESmarcadas, para fonte nova já vir marcada.
+const Picked = {
+  off: new Set((() => { try { return JSON.parse(localStorage.getItem('garimpo.fontesOff')) || []; } catch { return []; } })()),
+  has: (id) => !Picked.off.has(id),
+  toggle(id) {
+    Picked.off.has(id) ? Picked.off.delete(id) : Picked.off.add(id);
+    try { localStorage.setItem('garimpo.fontesOff', JSON.stringify([...Picked.off])); } catch {}
+  },
+  ids: () => (LAST_SOURCES || []).map((s) => s.id).filter(Picked.has),
+};
+let LAST_SOURCES = null, LAST_RUNNING = false;
 function renderSources(all, running) {
+  LAST_SOURCES = all; LAST_RUNNING = running;
   renderSourcesInto($('#sources'), $('#notice'), all.filter((s) => s.kind !== 'concursos'), running);
   renderSourcesInto($('#cSources'), $('#cNotice'), all.filter((s) => s.kind === 'concursos'), running);
+  refreshLabel();
 }
+function refreshLabel() {
+  if (polling) return;
+  const total = (LAST_SOURCES || []).length, n = Picked.ids().length;
+  $('#refreshLabel').textContent = !total || n === total ? 'Atualizar vagas' : n ? `Atualizar ${n} ${n === 1 ? 'fonte' : 'fontes'}` : 'Nenhuma fonte';
+  $('#refresh').disabled = total > 0 && n === 0;
+  $('#refresh').title = n === 0 ? 'Clique nas fontes (embaixo da busca) para escolher o que atualizar' : '';
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button.src[data-src]');
+  if (!b) return;
+  Picked.toggle(b.dataset.src);
+  renderSources(LAST_SOURCES, LAST_RUNNING);
+});
 function renderSourcesInto(wrap, n, sources, running) {
   wrap.innerHTML = sources.map((s) => {
-    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? String(s.count) : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : '—';
-    return `<span class="src ${s.status}" title="${esc(s.message || '')}"><i></i><b>${esc(s.name)}</b><span>${esc(txt)}</span></span>`;
-  }).join('') + `<span class="updated">${running ? 'Atualizando…' : DATA.updatedAt ? 'Atualizado em ' + new Date(DATA.updatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda não atualizado'}</span>`;
+    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? String(s.count) : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : s.status === 'parado' ? 'parado' : '—';
+    const on = Picked.has(s.id);
+    const tip = (on ? 'Entra na próxima atualização. Clique para tirar.' : 'Fora da próxima atualização. Clique para incluir.') + (s.message ? ' · ' + s.message : '');
+    return `<button type="button" class="src ${s.status}${on ? ' sel' : ''}" data-src="${esc(s.id)}" aria-pressed="${on}" title="${esc(tip)}"><i></i><b>${esc(s.name)}</b><span>${esc(txt)}</span></button>`;
+  }).join('') + (running ? '' : '<span class="src-hint">Clique nas fontes para escolher o que atualizar.</span>') + `<span class="updated">${running ? 'Atualizando…' : DATA.updatedAt ? 'Atualizado em ' + new Date(DATA.updatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda não atualizado'}</span>`;
 
   const problems = running ? [] : sources.filter((s) => s.status === 'bloqueado' || s.status === 'erro');
   n.hidden = !problems.length;
@@ -732,8 +773,17 @@ let polling = false;
 function setBusy(b) {
   const btn = $('#refresh');
   btn.disabled = b; btn.classList.toggle('spin', b);
-  $('#refreshLabel').textContent = b ? 'Atualizando…' : 'Atualizar vagas';
+  $('#stopRefresh').hidden = !b;
+  $('#stopRefresh').disabled = false;
+  $('#stopLabel').textContent = 'Parar';
+  if (b) $('#refreshLabel').textContent = 'Atualizando…';
+  else refreshLabel();
 }
+$('#stopRefresh').onclick = async () => {
+  $('#stopRefresh').disabled = true;
+  $('#stopLabel').textContent = 'Parando…';
+  try { await fetch('/api/refresh/cancel', { method: 'POST' }); } catch {}
+};
 async function poll() {
   if (polling) return; polling = true; setBusy(true);
   try {
@@ -752,8 +802,10 @@ async function poll() {
 }
 async function startRefresh() {
   if (polling) return;
+  // lista vazia o servidor entende como "todas"; sem nada marcado, não atualiza
+  if (LAST_SOURCES && !Picked.ids().length) return;
   setBusy(true);
-  try { await fetch('/api/refresh', { method: 'POST' }); } catch {}
+  try { await fetch('/api/refresh', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sources: Picked.ids() }) }); } catch {}
   await new Promise((r) => setTimeout(r, 300));
   poll();
 }

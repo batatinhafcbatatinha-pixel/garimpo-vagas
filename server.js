@@ -3,7 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { refresh, getStatus, loadData } = require('./lib/refresh');
+const { refresh, cancelRefresh, getStatus, loadData } = require('./lib/refresh');
 const { createStore } = require('./lib/applied');
 const linkedinAuth = require('./lib/linkedin-auth');
 const applied = createStore();
@@ -65,11 +65,16 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === '/api/status' && req.method === 'GET') return json(res, 200, getStatus());
   if (url.pathname === '/api/info' && req.method === 'GET') return json(res, 200, { urls: lanUrls() });
+  // POST /api/refresh { sources: ['linkedin', ...] } (sem corpo = todas). Roda em segundo plano;
+  // o site acompanha por /api/status.
   if (url.pathname === '/api/refresh' && req.method === 'POST') {
-    // dispara em segundo plano; o site acompanha por /api/status
-    if (!getStatus().running) refresh().catch((e) => console.error('Falha na atualização:', e));
-    return json(res, 202, { started: true });
+    return readBody(req).then((body) => {
+      const only = Array.isArray(body?.sources) ? body.sources.filter((s) => typeof s === 'string') : null;
+      if (!getStatus().running) refresh(only).catch((e) => console.error('Falha na atualização:', e));
+      return json(res, 202, { started: true });
+    });
   }
+  if (url.pathname === '/api/refresh/cancel' && req.method === 'POST') return json(res, 200, { cancelled: cancelRefresh() });
   if (req.method !== 'GET') return json(res, 405, { error: 'método não permitido' });
 
   const file = path.join(PUBLIC, path.normalize(url.pathname === '/' ? 'index.html' : url.pathname));
