@@ -1,10 +1,14 @@
 // Glassdoor: a primeira página de cada busca vem embutida no HTML (stream do Next.js).
 // As páginas seguintes e a descrição completa vêm das APIs internas que o próprio site usa
-// (job-search-next/bff). Elas recusam navegador automatizado, mas aceitam o curl.
-const { curlText, htmlToText, pool, sleep } = require('../lib/http');
+// (job-search-next/bff). Elas recusam navegador automatizado, mas aceitavam o curl.
+// Quando o Glassdoor bloqueia o curl também (HTTP 403 do Cloudflare), as buscas passam a ser
+// abertas pelo Edge/Chrome headless (mais lento: menos páginas) e a descrição fica com o
+// resumo do cartão, já que a página de cada vaga cai na verificação anti-robô.
+const { curlText, browserHtml, findBrowser, htmlToText, pool, sleep } = require('../lib/http');
 
 const TERMS = ['desenvolvedor junior', 'programador junior', 'desenvolvedor jr', 'desenvolvedor', 'programador', 'junior developer', 'desenvolvedor trainee', 'estagio desenvolvimento', 'front end junior', 'back end junior'];
 const MAX_PAGES = 5; // 30 vagas por página
+const MAX_PAGES_BROWSER = 2; // pelo navegador cada página leva uns 17 s
 const MAX_DETAILS = 500; // descrições novas por atualização; o resto fica para a próxima
 const BASE = 'https://www.glassdoor.com.br';
 const BFF = `${BASE}/job-search-next/bff`;
@@ -20,7 +24,8 @@ function search(place, term) {
   const params = `IL.0,${p}_${place.loc}_KO${p + 1},${p + 1 + term.length}`;
   const seo = `${place.prefix}-${slug(term)}-vagas`;
   const qs = place.remote ? 'remoteWorkType=1' : '';
-  return { params, seo, qs, url: `${BASE}/Vaga/${seo}-SRCH_${params}.htm${qs ? '?' + qs : ''}` };
+  const pageUrl = (n) => `${BASE}/Vaga/${seo}-SRCH_${params}${n > 1 ? '_IP' + n : ''}.htm${qs ? '?' + qs : ''}`;
+  return { params, seo, qs, url: pageUrl(1), pageUrl };
 }
 
 // Junta os pedaços self.__next_f.push([1,"..."]) num texto só.
@@ -158,6 +163,25 @@ module.exports = {
   parsePage,
   mapListing,
   async fetchJobs(progress, cache = {}) {
+    // começa pelo curl; no primeiro bloqueio, o resto da atualização vai pelo navegador
+    let viaBrowser = false;
+    const canBrowser = !!findBrowser();
+    const getHtml = async (url) => {
+      if (!viaBrowser) {
+        try {
+          return await curlText(url);
+        } catch (e) {
+          if (!canBrowser) throw e;
+          viaBrowser = true;
+        }
+      }
+      // às vezes vem a tela "Um momento…" do Cloudflare; uma segunda tentativa costuma passar
+      for (let i = 0; ; i++) {
+        const html = await browserHtml(url);
+        if (html.includes('__next_f') || i >= 1) return html;
+        await sleep(2000);
+      }
+    };
     const queries = PLACES.flatMap((p) => TERMS.map((t) => ({ p, t })));
     const byId = new Map();
     let done = 0;
@@ -166,17 +190,18 @@ module.exports = {
     await pool(queries, 2, async ({ p, t }) => {
       const s = search(p, t);
       try {
-        let { jobs, cursors } = parsePage(await curlText(s.url), p);
+        let { jobs, cursors } = parsePage(await getHtml(s.url), p);
         firstOk++;
         for (let page = 2; ; page++) {
           let fresh = 0;
           for (const j of jobs) if (!byId.has(j.sourceId)) { byId.set(j.sourceId, j); fresh++; }
           const next = cursors.find((c) => c.pageNumber === page);
           // para quando acabam as páginas ou a busca só repete vagas já vistas
-          if (!next || page > MAX_PAGES || !fresh || jobs.length < 30) break;
+          if (!next || page > (viaBrowser ? MAX_PAGES_BROWSER : MAX_PAGES) || !fresh || jobs.length < 30) break;
           await sleep(300);
           try {
-            ({ jobs, cursors } = await fetchPage(p, t, s, page, next.cursor));
+            if (viaBrowser) ({ jobs, cursors } = parsePage(await getHtml(s.pageUrl(page)), p));
+            else ({ jobs, cursors } = await fetchPage(p, t, s, page, next.cursor));
           } catch (e) {
             errors.push(`página ${page}: ${e.message}`);
             break;
@@ -195,12 +220,16 @@ module.exports = {
     for (const id of Object.keys(cache)) if (!byId.has(id)) delete cache[id];
     const missing = jobs.filter((j) => !cache[j.sourceId]).slice(0, MAX_DETAILS);
     let n = 0;
+    let detailsBlocked = false;
     await pool(missing, 3, async (j) => {
+      if (detailsBlocked) return;
       try {
         const d = await fetchDetail(j.sourceId);
         if (d) cache[j.sourceId] = d;
-      } catch {
-        /* fica com o resumo desta vez; tenta de novo na próxima atualização */
+      } catch (e) {
+        // API bloqueada: não adianta insistir nas outras; ficam com o resumo do cartão
+        if (e.status === 403 || /curl falhou/.test(e.message)) detailsBlocked = true;
+        /* senão, tenta de novo na próxima atualização */
       }
       progress(`descrições ${++n}/${missing.length}`);
       await sleep(200);

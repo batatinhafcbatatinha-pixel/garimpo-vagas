@@ -1,6 +1,7 @@
 // LinkedIn: usa as páginas públicas de busca (sem login). A lista não traz a descrição,
 // então cada vaga nova é aberta uma vez e a descrição fica em cache.
 const { fetchText, htmlToText, decodeEntities, pool, sleep } = require('../lib/http');
+const auth = require('../lib/linkedin-auth');
 
 const BASE = 'https://www.linkedin.com/jobs-guest/jobs/api';
 const TERMS = ['desenvolvedor junior', 'programador junior', 'desenvolvedor jr', 'junior developer', 'desenvolvedor trainee', 'estágio desenvolvimento'];
@@ -27,7 +28,8 @@ function parseCards(html, place) {
         company: clean(g(/base-search-card__subtitle[^>]*>([\s\S]*?)<\/h4>/)),
         logo: decodeEntities(g(/data-delayed-url="([^"]+)"/) || '') || null,
         location: clean(g(/job-search-card__location[^>]*>([\s\S]*?)<\/span>/)),
-        workMode: place.workMode || null,
+        // o filtro f_WT do LinkedIn é frouxo (sem login a vaga não mostra o modelo), então é só uma pista
+        workModeHint: place.workMode || null,
         url: `https://www.linkedin.com/jobs/view/${id}`,
         publishedAt: g(/datetime="([^"]+)"/) || null,
         salaryText: clean(g(/job-search-card__salary-info[^>]*>([\s\S]*?)<\/span>/)) || null,
@@ -87,6 +89,9 @@ module.exports = {
       progress(`descrições ${++done}/${missing.length}`);
       await sleep(250);
     });
+    // com login (opcional), confere o modelo de trabalho real; as "remotas" primeiro
+    const ids = [...jobs].sort((a, b) => (b.workModeHint === 'remote') - (a.workModeHint === 'remote')).map((j) => j.sourceId);
+    await auth.fillWorkModes(ids, cache, progress);
     return jobs.map((j) => ({ ...j, ...(cache[j.sourceId] || {}) }));
   },
 };

@@ -183,6 +183,16 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 }
 .foot { max-width: 1280px; margin: 0 auto; padding: 0 20px 32px; color: var(--muted); font-size: 13px; }
 .foot b { color: var(--ink); font-weight: 600; }
+.foot > div + div { margin-top: 8px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+.li-dlg { max-width: 520px; width: calc(100% - 32px); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 22px; }
+.li-dlg::backdrop { background: rgb(0 0 0 / .45); }
+.li-dlg h3 { margin: 0 0 10px; }
+.li-dlg p, .li-dlg ol { font-size: 14px; line-height: 1.5; margin: 0 0 10px; }
+.li-dlg .warn { border-left: 3px solid #d9822b; padding: 6px 10px; background: rgb(217 130 43 / .1); border-radius: 6px; }
+.li-dlg input { width: 100%; box-sizing: border-box; height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 0 12px; font: inherit; }
+.li-dlg .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.li-dlg .msg { min-height: 1.2em; font-size: 13px; color: var(--muted); margin-top: 8px; }
 
 /* TV: tudo maior para ler do sofá, foco bem visível para navegar pelo controle */
 html.tv { zoom: 1.45; }
@@ -364,7 +374,24 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <div class="list" id="hList"></div>
   </section>
 </main>
-<footer class="foot" id="foot"></footer>
+<footer class="foot"><div id="foot"></div><div id="liFoot"></div></footer>
+<dialog class="li-dlg" id="liDlg">
+  <h3>Login no LinkedIn (opcional)</h3>
+  <p>Sem login, o LinkedIn não mostra se a vaga é presencial, remota ou híbrida. Por isso algumas aparecem como <b>Remoto?</b>. Com o seu login, o Garimpo consulta o modelo de trabalho real de cada vaga nova.</p>
+  <p class="warn">O LinkedIn proíbe automação com conta logada e pode restringir a conta. O Garimpo consulta devagar e só até 60 vagas por atualização, mas o risco existe. Se preferir, use uma conta secundária.</p>
+  <ol>
+    <li>No navegador, entre em <b>linkedin.com</b> com a conta.</li>
+    <li>Aperte <b>F12</b> → aba <b>Aplicativo</b> (Application) → <b>Cookies</b> → <b>https://www.linkedin.com</b>.</li>
+    <li>Copie o <b>Valor</b> do cookie <b>li_at</b> e cole aqui:</li>
+  </ol>
+  <input id="liCookie" type="password" autocomplete="off" placeholder="valor do cookie li_at" aria-label="Cookie li_at">
+  <div class="msg" id="liMsg"></div>
+  <div class="row">
+    <button class="btn" id="liOff" hidden>Desconectar</button>
+    <button class="btn" id="liClose">Fechar</button>
+    <button class="btn primary" id="liSave">Salvar</button>
+  </div>
+</dialog>
 
 <script>
 // Detecta TV (LG webOS e outras smart TVs) ou ?tv=1 na URL, e navegador sem "gap" em flex.
@@ -490,7 +517,7 @@ function card(j) {
     j.salary.informado ? `<span class="tag money">${esc(j.salary.texto)}</span>` : '',
     `<span class="tag ${j.level === 'junior' ? 'info' : ''}">${LEVEL_LABEL[j.level]}</span>`,
     `<span class="tag ${eduCls}">${eduLabel}</span>`,
-    j.workMode ? `<span class="tag">${MODE[j.workMode]}</span>` : '',
+    j.workMode ? `<span class="tag"${j.workModeUnconfirmed ? ' title="O LinkedIn listou como remota, mas a descrição não confirma"' : ''}>${MODE[j.workMode]}${j.workModeUnconfirmed ? '?' : ''}</span>` : '',
     `<span class="tag src-${j.source}">${SRC_LABEL[j.source]}</span>`,
     ...(j.alsoOn || []).map((s) => `<span class="tag src-${s}" title="Também publicada no ${SRC_LABEL[s]}">+ ${SRC_LABEL[s]}</span>`),
     actions(j.id, 'Já me candidatei'),
@@ -717,6 +744,7 @@ async function poll() {
       await new Promise((r) => setTimeout(r, 1200));
     }
     await load();
+    liRefresh();
   } catch {
     $('#notice').hidden = false;
     $('#notice').textContent = 'Perdi a conexão com o servidor local. Confira se a janela do "Garimpo" continua aberta e recarregue a página.';
@@ -735,6 +763,29 @@ $('#refresh').onclick = startRefresh;
 fetch('/api/info').then((r) => r.json()).then((info) => {
   if (info.urls.length) $('#foot').innerHTML = 'Para abrir no celular ou na TV (mesma rede Wi-Fi): ' + info.urls.map((u) => '<b>' + esc(u) + '</b>').join(' ou ');
 }).catch(() => {});
+
+// login opcional do LinkedIn
+const LI_TXT = { novo: 'conectado, confere na próxima atualização', ok: 'conectado', expirado: 'login expirou, cole o cookie de novo' };
+async function liRefresh() {
+  try {
+    const st = await (await fetch('/api/linkedin')).json();
+    $('#liFoot').innerHTML = st.connected
+      ? `LinkedIn: <b>${esc(LI_TXT[st.status] || 'conectado')}</b> · <button class="linkbtn" id="liOpen">alterar</button>`
+      : 'Algumas vagas do LinkedIn aparecem como “Remoto?”. <button class="linkbtn" id="liOpen">Entrar no LinkedIn para saber o modelo exato</button> (opcional)';
+    $('#liOff').hidden = !st.connected;
+    $('#liOpen').onclick = () => { $('#liMsg').textContent = ''; $('#liCookie').value = ''; $('#liDlg').showModal(); };
+  } catch {}
+}
+async function liSend(cookie) {
+  const r = await fetch('/api/linkedin', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie }) });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { $('#liMsg').textContent = body.error || 'Não deu para salvar.'; return; }
+  $('#liDlg').close(); liRefresh();
+}
+$('#liSave').onclick = () => { const v = $('#liCookie').value.trim(); if (v) liSend(v); else $('#liMsg').textContent = 'Cole o valor do cookie li_at.'; };
+$('#liOff').onclick = () => liSend('');
+$('#liClose').onclick = () => $('#liDlg').close();
+liRefresh();
 
 load().then(async () => {
   // se uma atualização já estiver rodando (ex.: página recarregada no meio), acompanha

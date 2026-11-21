@@ -70,4 +70,11 @@ test('local', () => {
   assert.equal(classifyLocation('Greater Porto Alegre').isMetro, true);
   assert.equal(classifyLocation('São Paulo', 'remote').isRemote, true);
   assert.equal(classifyLocation('Brasil', null, 'Vaga 100% remoto para todo o país').isRemote, true);
+  // pista do filtro "remoto" do LinkedIn: o texto manda
+  assert.equal(classifyLocation('Fortaleza, CE', null, 'Modelo de trabalho presencial', 'remote').isRemote, false);
+  assert.equal(classifyLocation('Recife, PE', null, 'Atuação híbrida', 'remote').workMode, 'hybrid');
+  const semTexto = classifyLocation('Fortaleza, CE', null, 'Descrição sem modelo', 'remote');
+  assert.equal(semTexto.isRemote, true);
+  assert.equal(semTexto.workModeUnconfirmed, true);
+  assert.equal(classifyLocation('Brazil', null, 'Descrição sem modelo', 'remote').workModeUnconfirmed, false);
 });

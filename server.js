@@ -5,6 +5,7 @@ const path = require('path');
 const os = require('os');
 const { refresh, getStatus, loadData } = require('./lib/refresh');
 const { createStore } = require('./lib/applied');
+const linkedinAuth = require('./lib/linkedin-auth');
 const applied = createStore();
 // vagas escondidas: mesmo formato das candidaturas, em outro arquivo
 const hidden = createStore(path.join(__dirname, 'data', 'escondidas.json'));
@@ -48,6 +49,18 @@ const server = http.createServer((req, res) => {
       if (!body || typeof body.id !== 'string' || !body.id || body.id.length > 300) return json(res, 400, { error: 'pedido inválido' });
       const map = st.set(body.id, body[key] !== false, loadData());
       return map ? json(res, 200, { [key]: map }) : json(res, 404, { error: 'vaga não encontrada' });
+    });
+  }
+  // login opcional do LinkedIn: GET diz só se está conectado; POST { cookie } salva ("" desconecta).
+  // Trocar o cookie só pelo próprio computador, já que o servidor fica aberto na rede local.
+  if (url.pathname === '/api/linkedin' && req.method === 'GET') return json(res, 200, linkedinAuth.publicStatus());
+  if (url.pathname === '/api/linkedin' && req.method === 'POST') {
+    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+    if (!local) return json(res, 403, { error: 'Conecte o LinkedIn pelo próprio computador onde o Garimpo está rodando.' });
+    return readBody(req).then((body) => {
+      if (!body || typeof body.cookie !== 'string') return json(res, 400, { error: 'pedido inválido' });
+      try { return json(res, 200, linkedinAuth.setCookie(body.cookie)); }
+      catch (e) { return json(res, 400, { error: e.message }); }
     });
   }
   if (url.pathname === '/api/status' && req.method === 'GET') return json(res, 200, getStatus());
