@@ -43,7 +43,9 @@ function parse(html, s) {
     company: r.company || 'Empresa confidencial',
     logo: null,
     location: r.formattedLocation || s.l,
-    workMode: s.remote || r.remoteLocation ? 'remote' : null,
+    // filtro "remoto" da busca: pista confiável, mas a descrição manda (ex.: "modelo híbrido")
+    workModeHint: s.remote || r.remoteLocation ? 'remote' : null,
+    workModeHintTrusted: true,
     url: `https://br.indeed.com/viewjob?jk=${r.jobkey}`,
     publishedAt: r.pubDate ? new Date(r.pubDate).toISOString() : null,
     salaryText: r.salarySnippet?.text || null,
@@ -64,17 +66,20 @@ module.exports = {
   async fetchJobs(progress) {
     const jobs = [];
     let blocked = 0;
+    const errors = [];
     for (const [i, s] of SEARCHES.entries()) {
       try {
         const found = parse(await getPage(searchUrl(s)), s);
         if (found) jobs.push(...found);
         else blocked++;
       } catch (e) {
+        // uma busca que falha não derruba as outras
         if (e.status === 403) blocked++;
-        else throw e;
+        else errors.push(e);
       }
-      progress(`${i + 1}/${SEARCHES.length} buscas`);
+      progress(`${i + 1}/${SEARCHES.length} buscas · ${jobs.length} vagas`);
     }
+    if (!jobs.length && errors.length) throw errors[0];
     if (blocked === SEARCHES.length) {
       const err = new Error(
         findBrowser()

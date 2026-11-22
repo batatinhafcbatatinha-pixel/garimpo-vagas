@@ -25,12 +25,12 @@ test('lê as vagas mesmo com outros comandos depois do JSON no mesmo script', ()
   assert.strictEqual(jobs[0].url, 'https://br.indeed.com/viewjob?jk=abc123');
   assert.strictEqual(jobs[0].salaryText, 'R$ 3.000 por mês');
   assert.match(jobs[0].description, /Node\.js \{e\} "React"/);
-  assert.strictEqual(jobs[0].workMode, null);
+  assert.strictEqual(jobs[0].workModeHint, null);
 });
 
-test('busca remota marca a vaga como remota', () => {
+test('busca remota vira pista de remoto (a descrição pode desmentir)', () => {
   const jobs = parse(page({ metaData: { mosaicProviderJobCardsModel: { results: [card] } } }), { l: 'Brasil', remote: true });
-  assert.strictEqual(jobs[0].workMode, 'remote');
+  assert.strictEqual(jobs[0].workModeHint, 'remote');
 });
 
 test('página de bloqueio devolve null', () => {

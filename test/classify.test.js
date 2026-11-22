@@ -78,3 +78,31 @@ test('local', () => {
   assert.equal(semTexto.workModeUnconfirmed, true);
   assert.equal(classifyLocation('Brazil', null, 'Descrição sem modelo', 'remote').workModeUnconfirmed, false);
 });
+
+test('modelo de trabalho: texto desmente o filtro remoto', () => {
+  const { classifyLocation } = require('../lib/classify');
+  // Glassdoor: busca "remoto", mas "Informações da vaga" no fim diz híbrido
+  const longo = 'Sobre a empresa. '.repeat(150) + 'Informações da vaga:\nModelo híbrido – 2 dias presenciais e 3 dias em home office';
+  const g = classifyLocation('São Paulo, SP', null, longo, 'remote', true);
+  assert.equal(g.workMode, 'hybrid');
+  assert.equal(g.isRemote, false);
+  assert.equal(classifyLocation('Recife', null, 'Trabalho 3x por semana no escritório', 'remote', true).workMode, 'hybrid');
+  // pista confiável sem nada no texto: remoto sem "?"
+  const c = classifyLocation('São Paulo, SP', null, 'Sem modelo', 'remote', true);
+  assert.equal(c.isRemote, true);
+  assert.equal(c.workModeUnconfirmed, false);
+  // app híbrido não é trabalho híbrido
+  assert.equal(classifyLocation('Brasil', null, 'Desenvolvimento de apps mobile ' + 'x '.repeat(900) + 'com Flutter híbrido app', 'remote').workMode, 'remote');
+});
+
+test('idioma e PCD', () => {
+  const { isEnglishText, isPcdOnly } = require('../lib/classify');
+  assert.equal(isEnglishText('Jr. Developer, AI & Automation', 'We are looking for a developer to join our team. You will work with the product team and you will be responsible for the automation of our processes and the development of tools.'), true);
+  assert.equal(isEnglishText('Desenvolvedor Júnior', 'Estamos buscando uma pessoa desenvolvedora para fazer parte do nosso time. Você vai trabalhar com a equipe de produto e com experiência em Java e em React para os nossos clientes.'), false);
+  assert.equal(isEnglishText('Junior Developer', ''), true);
+  assert.equal(isEnglishText('Desenvolvedor Junior', ''), false);
+  assert.equal(isPcdOnly('Desenvolvedor Júnior - Vaga Afirmativa PCD', ''), true);
+  assert.equal(isPcdOnly('Desenvolvedor', 'Esta vaga é exclusiva para pessoas com deficiência.'), true);
+  assert.equal(isPcdOnly('Desenvolvedor', 'Vaga afirmativa para PCD.'), true);
+  assert.equal(isPcdOnly('Desenvolvedor', 'Todas as nossas vagas também são abertas para pessoas com deficiência.'), false);
+});

@@ -113,7 +113,10 @@ function mapListing(l, place, resolve = (v) => v) {
     company: h.employerNameFromSearch || h.employer?.shortName || h.employer?.name || 'Empresa confidencial',
     logo: resolve(jv.overview?.squareLogoUrl) || null,
     location: resolve(h.locationName) || 'Brasil',
-    workMode: place.workMode || (attrs.some((a) => /remoto|home office/i.test(a)) ? 'remote' : attrs.some((a) => /h[íi]brido/i.test(a)) ? 'hybrid' : null),
+    // atributos da vaga > texto da descrição > filtro "remoto" da busca (só pista: tem vaga híbrida nele)
+    workMode: attrs.some((a) => /h[íi]brido/i.test(a)) ? 'hybrid' : attrs.some((a) => /remoto|home office/i.test(a)) ? 'remote' : attrs.some((a) => /presencial/i.test(a)) ? 'onsite' : null,
+    workModeHint: place.workMode || null,
+    workModeHintTrusted: true,
     url: link.startsWith('http') ? link : BASE + link,
     publishedAt: Number.isFinite(h.ageInDays) ? new Date(Date.now() - h.ageInDays * 864e5).toISOString() : null,
     salaryText,

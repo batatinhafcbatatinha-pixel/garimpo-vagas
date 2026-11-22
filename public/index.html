@@ -257,7 +257,12 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
   <div class="notice" id="notice" hidden></div>
 
   <aside class="filters" id="filters" aria-label="Filtros">
-    <h2>Filtros <button class="link" id="reset" title="Dev júnior, sem exigir superior, Porto Alegre ou remoto">Restaurar meu filtro</button></h2>
+    <h2>Filtros <button class="link" id="reset" title="Dev júnior, sem exigir superior, Porto Alegre ou remoto, sem vagas em inglês ou exclusivas PCD">Restaurar meu filtro</button></h2>
+
+    <div class="group">
+      <h3>Site</h3>
+      <div class="chips" data-set="fonte" id="fonteChips"></div>
+    </div>
 
     <div class="group">
       <h3>Local</h3>
@@ -267,6 +272,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
         <label class="chip"><input type="checkbox" value="metro"><span>Grande POA <small data-count="metro"></small></span></label>
         <label class="chip"><input type="checkbox" value="outro"><span>Outros <small data-count="outro"></small></span></label>
       </div>
+      <label class="switch"><input type="checkbox" id="remotoConfirmado"><div>Remoto só se confirmado<small>Tira as “Remoto?”: vagas que o site listou como remotas mas a descrição não confirma.</small></div></label>
     </div>
 
     <div class="group">
@@ -297,16 +303,14 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <div class="group">
       <h3>Mais</h3>
       <label class="switch"><input type="checkbox" id="soDev"><div>Só vagas de desenvolvimento / TI<small>Tira jovem aprendiz, vendas e afins que vêm junto nas buscas.</small></div></label>
+      <label class="switch"><input type="checkbox" id="semIngles"><div>Esconder vagas em inglês<small>Descrição (ou título, quando não tem descrição) escrita em inglês.</small></div></label>
+      <label class="switch"><input type="checkbox" id="semPcd"><div>Esconder vagas exclusivas PCD<small>Vagas afirmativas ou só para pessoas com deficiência.</small></div></label>
       <label class="switch"><input type="checkbox" id="soNovas"><div>Só novas desde a última atualização</div></label>
       <div class="field"><label for="dias">Publicadas</label>
         <select id="dias"><option value="0">em qualquer data</option><option value="3">nos últimos 3 dias</option><option value="7">nos últimos 7 dias</option><option value="15">nos últimos 15 dias</option><option value="30">nos últimos 30 dias</option></select>
       </div>
     </div>
 
-    <div class="group">
-      <h3>Site</h3>
-      <div class="chips" data-set="fonte" id="fonteChips"></div>
-    </div>
   </aside>
 
   <section aria-label="Vagas">
@@ -391,7 +395,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
 <dialog class="li-dlg" id="liDlg">
   <h3>Login no LinkedIn (opcional)</h3>
   <p>Sem login, o LinkedIn não mostra se a vaga é presencial, remota ou híbrida. Por isso algumas aparecem como <b>Remoto?</b>. Com o seu login, o Garimpo consulta o modelo de trabalho real de cada vaga nova.</p>
-  <p class="warn">O LinkedIn proíbe automação com conta logada e pode restringir a conta. O Garimpo consulta devagar e só até 60 vagas por atualização, mas o risco existe. Se preferir, use uma conta secundária.</p>
+  <p class="warn">O LinkedIn proíbe automação com conta logada e pode restringir a conta. O Garimpo consulta devagar e só até 100 vagas por atualização, mas o risco existe. Se preferir, use uma conta secundária.</p>
   <ol>
     <li>No navegador, entre em <b>linkedin.com</b> com a conta.</li>
     <li>Aperte <b>F12</b> → aba <b>Aplicativo</b> (Application) → <b>Cookies</b> → <b>https://www.linkedin.com</b>.</li>
@@ -427,7 +431,7 @@ const { norm, parseQuery, matchesQuery } = JobSearch;
 // ---------- estado ----------
 const DEFAULTS = {
   q: '', local: ['poa', 'remoto'], nivel: ['junior'], fonte: null, // null = todos os sites
-  semSuperior: true, exigeMedioTecnico: false, comSalario: false, salMin: '', soDev: true, soNovas: false, dias: '0', sort: 'recentes',
+  semSuperior: true, exigeMedioTecnico: false, comSalario: false, salMin: '', soDev: true, semIngles: true, semPcd: true, remotoConfirmado: true, soNovas: false, dias: '0', sort: 'recentes',
 };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -474,7 +478,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const safeUrl = (u) => (/^https:\/\//.test(u || '') ? u : '#');
 
 // ---------- filtro ----------
-const locOf = (j) => { const l = []; if (j.isPoa) l.push('poa'); if (j.isRemote) l.push('remoto'); if (j.isMetro) l.push('metro'); if (!l.length) l.push('outro'); return l; };
+const locOf = (j) => { const l = []; if (j.isPoa) l.push('poa'); if (j.isRemote && !(F.remotoConfirmado && j.workModeUnconfirmed)) l.push('remoto'); if (j.isMetro) l.push('metro'); if (!l.length) l.push('outro'); return l; };
 const isNew = (j) => DATA.previousUpdate && j.firstSeen > DATA.previousUpdate;
 
 // Aplica todos os filtros, menos o grupo `skip` (usado para as contagens de cada opção).
@@ -488,6 +492,8 @@ function passes(j, parsed, skip) {
   if (skip !== 'local' && !j._loc.some((l) => F.local.includes(l))) return false;
   if (skip !== 'fonte' && F.fonte && !F.fonte.includes(j.source) && !(j.alsoOn || []).some((s) => F.fonte.includes(s))) return false;
   if (F.soDev && !j.isDev) return false;
+  if (F.semIngles && j.isEnglish) return false;
+  if (F.semPcd && j.pcdOnly) return false;
   if (F.semSuperior && j.edu.exigeSuperior) return false;
   if (F.exigeMedioTecnico && !(j.edu.medio || j.edu.tecnico)) return false;
   if (F.comSalario && !j.salary.informado) return false;
@@ -680,10 +686,10 @@ function syncControls() {
   if (TAB === 'vagas') { $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q); }
   for (const set of ['local', 'nivel']) document.querySelectorAll(`[data-set="${set}"] input`).forEach((i) => (i.checked = F[set].includes(i.value)));
   document.querySelectorAll('#fonteChips input').forEach((i) => (i.checked = !F.fonte || F.fonte.includes(i.value)));
-  for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'soNovas']) $('#' + id).checked = F[id];
+  for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'semIngles', 'semPcd', 'remotoConfirmado', 'soNovas']) $('#' + id).checked = F[id];
   $('#salMin').value = F.salMin; $('#dias').value = F.dias; $('#sort').value = F.sort;
 }
-function changed() { shown = 40; store.set('garimpo.filtros', F); render(); }
+function changed() { for (const j of DATA.jobs) j._loc = locOf(j); shown = 40; store.set('garimpo.filtros', F); render(); }
 function resetFilters() { F = { ...DEFAULTS }; syncControls(); changed(); }
 
 let typing;
