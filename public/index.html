@@ -759,20 +759,25 @@ if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 <script src="concursos.js"></script>
 <script>
 // ---------- dados ----------
-async function load() {
+// `st` = status de uma atualização em andamento: mostra as vagas que já chegaram sem mexer no resto da tela.
+async function load(st) {
+  // detalhes abertos continuam abertos depois de redesenhar
+  const idOf = (d) => { const b = d.closest('article').querySelector('[data-apply],[data-hide]'); return b && (b.dataset.apply || b.dataset.hide); };
+  const open = new Set([...document.querySelectorAll('details.more[open]')].map(idOf));
   DATA = await (await fetch('/api/jobs')).json();
   Applied.map = DATA.applied || {};
   Hidden.map = DATA.hidden || {};
   for (const j of DATA.jobs) { j._text = norm(j.title + ' ' + j.company); j._loc = locOf(j); }
   $('#fonteChips').innerHTML = DATA.sources.filter((s) => s.kind !== 'concursos').map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
   syncControls();
-  renderSources(DATA.sources, false);
+  renderSources(st ? st.sources : DATA.sources, !!st);
   render();
   Concursos.setData(DATA);
   renderMarked();
   $('#tabVagasN').textContent = DATA.jobs.length || '';
   $('#tabConcursosN').textContent = (DATA.concursos || []).length || '';
-  showTab(TAB);
+  if (st) document.querySelectorAll('details.more').forEach((d) => { if (open.has(idOf(d))) d.open = true; });
+  else showTab(TAB);
 }
 
 let polling = false;
@@ -793,10 +798,13 @@ $('#stopRefresh').onclick = async () => {
 async function poll() {
   if (polling) return; polling = true; setBusy(true);
   try {
+    let version = 0;
     for (;;) {
       const st = await (await fetch('/api/status')).json();
       renderSources(st.sources, st.running);
       if (!st.running) break;
+      // uma fonte terminou: já mostra as vagas dela, sem esperar as outras
+      if (st.version !== version) { version = st.version; await load(st); }
       await new Promise((r) => setTimeout(r, 1200));
     }
     await load();
