@@ -106,3 +106,27 @@ test('idioma e PCD', () => {
   assert.equal(isPcdOnly('Desenvolvedor', 'Vaga afirmativa para PCD.'), true);
   assert.equal(isPcdOnly('Desenvolvedor', 'Todas as nossas vagas também são abertas para pessoas com deficiência.'), false);
 });
+
+test('superior exigido em outra frase vence o "escolaridade mínima: ensino médio"', () => {
+  // quem cursa superior já tem o médio: o campo do formulário não é alternativa
+  const e = classifyEducation('Requisitos:Superior cursando e/ou completo em análise de sistemas - conhecimento em TASY e SQL\nHorário: 08:00 - 17:48\nEscolaridade Mínima: Ensino Médio (2º Grau)\nvale alimentação\nEnsino Médio');
+  assert.equal(e.resumo, 'superior');
+  assert.match(e.trecho, /Superior cursando/);
+  // alternativa de verdade vem na mesma frase
+  assert.equal(classifyEducation('Ensino médio completo ou superior em andamento').exigeSuperior, false);
+  // benefício não é exigência
+  assert.equal(classifyEducation('Ensino médio completo.\nBenefícios: auxílio faculdade e Gympass').resumo, 'medio');
+});
+
+test('"possibilidade de home office" é híbrido, não remoto confirmado', () => {
+  const d = 'Empresa de tecnologia. '.repeat(100) + 'Temos horário flexível e possibilidade de atuação home office. Equipes pequenas.';
+  const l = classifyLocation('São Paulo, SP', null, d, 'remote');
+  assert.equal(l.workMode, 'hybrid');
+  assert.equal(l.isRemote, false);
+});
+
+test('benefício com "por mês" não vira salário', () => {
+  assert.equal(classifySalary('Benefícios:\nFlexfood (R$910 por mês para utilização em mercados e restaurantes);\nSeguro de vida').informado, false);
+  assert.equal(classifySalary('Vale alimentação de R$ 800 por mês').informado, false);
+  assert.equal(classifySalary('Bolsa auxílio: R$ 1.200 por mês').min, 1200);
+});
