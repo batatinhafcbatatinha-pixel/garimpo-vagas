@@ -2,7 +2,7 @@
 
 Indexador local de vagas de dev júnior e de concursos públicos de TI. Mostra tudo em um site com filtros, em duas abas:
 
-- **Vagas:** Gupy, LinkedIn, InfoJobs, Glassdoor e Indeed
+- **Vagas:** Gupy, LinkedIn, InfoJobs, Glassdoor, Indeed, Sólides, Catho, Empregos.com.br, Vagas.com, BNE, GeekHunter, Programathor, Remotar, Trampos, 99jobs e APInfo
 - **Concursos:** PCI Concursos, Prefeitura de Porto Alegre, CIEE-RS e CIEE nacional (concursos, processos seletivos e estágios em órgãos públicos)
 
 > Também existe uma versão publicada, atualizada sozinha uma vez por dia: https://batatinhafcbatatinha-pixel.github.io/garimpo-vagas/ (código no branch `site`, veja [Versão publicada](#versão-publicada)).
@@ -69,6 +69,12 @@ O workflow `.github/workflows/pages.yml` fica aqui no `main` porque o GitHub só
 
 - O Indeed recusa clientes HTTP comuns, então é buscado pelo Edge (ou Chrome) em modo headless, sem abrir janela. Cada busca leva uns 7 s. Sem navegador instalado ou se o Indeed bloquear mesmo assim, o site oferece links para abrir a busca direto lá.
 - O Glassdoor recusa navegador automatizado e o cliente HTTP do Node, então é buscado pelo `curl` (vem no Windows 10+). Lê até 5 páginas por busca e a descrição completa pelas APIs internas que o próprio site usa; até 500 descrições novas por atualização, o resto vem na seguinte. Quando o Glassdoor mostra a verificação anti-robô, a fonte aparece como bloqueada e mantém as vagas da atualização anterior.
+- O APInfo tem uma cota curta de consultas: quando esgota no meio, a fonte fica com o que já leu e com as vagas das últimas atualizações (até 30 dias). As vagas de lá abrem na página de busca, porque o link de cada vaga exige sessão.
+- Catho, Vagas.com, BNE, GeekHunter, Programathor, Trampos e 99jobs abrem a página de cada vaga nova para ler a descrição completa, com um limite por atualização; o resto entra na seguinte. Até lá a vaga aparece com o resumo da busca.
+- No BNE o título é só a função ("Desenvolvedor", "Programador"), então o nível quase sempre fica como não informado.
+- Na Catho o modelo de trabalho não vem nos dados; ele é deduzido da descrição.
+- Vagas de "Empresa confidencial" não são juntadas com outras de mesmo título, porque não dá para saber se são a mesma vaga.
+- Fora: Revelo (exige login), Mindsight (só tem a página de carreira de cada empresa, sem busca geral), Código Fonte (a seção de vagas acabou), TechRecruit e RocketJobs (nenhum site de vagas com esse nome no ar).
 - Nível, escolaridade e salário são deduzidos do texto da vaga e podem errar.
 - As buscas (termos e cidade) ficam no topo de cada arquivo em `sources/`.
 
