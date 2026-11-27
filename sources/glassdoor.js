@@ -193,7 +193,10 @@ module.exports = {
     await pool(queries, 2, async ({ p, t }) => {
       const s = search(p, t);
       try {
-        let { jobs, cursors } = parsePage(await getHtml(s.url), p);
+        const html = await getHtml(s.url);
+        // sem os dados do Next.js é a tela de verificação do Cloudflare, não uma busca sem vagas
+        if (!html.includes('__next_f')) throw Object.assign(new Error('O Glassdoor bloqueou as buscas automáticas (verificação anti-robô).'), { blocked: true });
+        let { jobs, cursors } = parsePage(html, p);
         firstOk++;
         for (let page = 2; ; page++) {
           let fresh = 0;
@@ -206,17 +209,17 @@ module.exports = {
             if (viaBrowser) ({ jobs, cursors } = parsePage(await getHtml(s.pageUrl(page)), p));
             else ({ jobs, cursors } = await fetchPage(p, t, s, page, next.cursor));
           } catch (e) {
-            errors.push(`página ${page}: ${e.message}`);
+            errors.push(new Error(`página ${page}: ${e.message}`));
             break;
           }
         }
       } catch (e) {
-        errors.push(e.message);
+        errors.push(e);
       } finally {
         progress(`${++done}/${queries.length} buscas · ${byId.size} vagas`);
       }
     });
-    if (!firstOk) throw new Error(errors[0]);
+    if (!firstOk) throw errors[0];
 
     const jobs = [...byId.values()];
     // descrição completa: cada vaga nova é aberta uma vez e fica em cache
