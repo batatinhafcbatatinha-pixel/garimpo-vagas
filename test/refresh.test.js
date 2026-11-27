@@ -22,3 +22,11 @@ test('build: índice parcial junta as fontes que já chegaram e deduplica', () =
   assert.strictEqual(r.jobs[1].firstSeen, '2025-01-01T00:00:00.000Z');
   assert.deepStrictEqual(r.concursos, []);
 });
+
+test('build: vagas de empresa confidencial com o mesmo título não viram uma só', () => {
+  const lists = SOURCES.map(() => []);
+  const at = (id) => SOURCES.findIndex((s) => s.id === id);
+  lists[at('bne')] = [job('bne', '1', 'Desenvolvedor', 'Empresa confidencial'), job('bne', '2', 'Desenvolvedor', 'Empresa confidencial'), job('bne', '3', 'Desenvolvedor', '')];
+  lists[at('catho')] = [job('catho', '7', 'Desenvolvedor', 'Confidencial')];
+  assert.deepStrictEqual(build(lists, new Map(), NOW).jobs.map((j) => j.id).sort(), ['bne:1', 'bne:2', 'bne:3', 'catho:7']);
+});

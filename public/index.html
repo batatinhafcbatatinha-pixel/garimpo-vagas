@@ -15,6 +15,7 @@
   --good: #1f6f4a; --good-bg: #dcebdf; --warn: #8a5a00; --warn-bg: #f6e6bf; --bad: #a3341f; --bad-bg: #f6dcd4; --info: #2b4f8c; --info-bg: #dde6f5;
   --shadow: 0 1px 2px rgba(40,30,10,.06), 0 8px 24px -12px rgba(40,30,10,.18);
   --gupy: #1b6fd1; --linkedin: #0a66c2; --infojobs: #e0531f; --glassdoor: #0a8f5b; --indeed: #2f3fb5;
+  --solides: #c2410c; --catho: #c8102e; --empregoscombr: #0b7a75; --vagascom: #6d28d9; --bne: #1d4ed8; --geekhunter: #7c3aed; --programathor: #b45309; --remotar: #0f766e; --trampos: #be185d; --99jobs: #4d7c0f; --apinfo: #475569;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #14130f; --surface: #1d1b16; --surface-2: #29261f; --ink: #f0ebdf; --muted: #a39c8b; --line: #37332a;
@@ -22,6 +23,7 @@
   --good: #7ad3a3; --good-bg: #1e3327; --warn: #e9c46a; --warn-bg: #3a2f12; --bad: #f09a86; --bad-bg: #3d1f18; --info: #9db9ee; --info-bg: #1c2740;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
   --gupy: #6fb0ff; --linkedin: #6cb1f0; --infojobs: #ff9163; --glassdoor: #5ed3a2; --indeed: #9aa5ff;
+  --solides: #fb923c; --catho: #ff7a8a; --empregoscombr: #4fd1c5; --vagascom: #c4b5fd; --bne: #93b4ff; --geekhunter: #c4a6ff; --programathor: #f5b75c; --remotar: #5eead4; --trampos: #f9a8d4; --99jobs: #a3e635; --apinfo: #b8c2d0;
 } }
 :root[data-theme="dark"] {
   --bg: #14130f; --surface: #1d1b16; --surface-2: #29261f; --ink: #f0ebdf; --muted: #a39c8b; --line: #37332a;
@@ -29,6 +31,7 @@
   --good: #7ad3a3; --good-bg: #1e3327; --warn: #e9c46a; --warn-bg: #3a2f12; --bad: #f09a86; --bad-bg: #3d1f18; --info: #9db9ee; --info-bg: #1c2740;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
   --gupy: #6fb0ff; --linkedin: #6cb1f0; --infojobs: #ff9163; --glassdoor: #5ed3a2; --indeed: #9aa5ff;
+  --solides: #fb923c; --catho: #ff7a8a; --empregoscombr: #4fd1c5; --vagascom: #c4b5fd; --bne: #93b4ff; --geekhunter: #c4a6ff; --programathor: #f5b75c; --remotar: #5eead4; --trampos: #f9a8d4; --99jobs: #a3e635; --apinfo: #b8c2d0;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -130,6 +133,7 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 .tag.money { background: var(--good); color: var(--surface); font-weight: 600; }
 .tag.new { background: var(--ink); color: var(--bg); font-weight: 600; }
 .tag.src-gupy { color: var(--gupy); } .tag.src-linkedin { color: var(--linkedin); } .tag.src-infojobs { color: var(--infojobs); } .tag.src-glassdoor { color: var(--glassdoor); } .tag.src-indeed { color: var(--indeed); }
+.tag.src-solides { color: var(--solides); } .tag.src-catho { color: var(--catho); } .tag.src-empregoscombr { color: var(--empregoscombr); } .tag.src-vagascom { color: var(--vagascom); } .tag.src-bne { color: var(--bne); } .tag.src-geekhunter { color: var(--geekhunter); } .tag.src-programathor { color: var(--programathor); } .tag.src-remotar { color: var(--remotar); } .tag.src-trampos { color: var(--trampos); } .tag.src-99jobs { color: var(--99jobs); } .tag.src-apinfo { color: var(--apinfo); }
 .tag[class*="src-"] { background: none; border: 1px solid currentColor; font-weight: 600; }
 .acts { margin-left: auto; display: flex; gap: 6px; }
 .apply.ghost { color: var(--muted); }
@@ -423,7 +427,11 @@ const Hidden = marks('hidden', 'garimpo.escondidas');
 const MQ = { candidaturas: '', escondidas: '' }; // busca dentro das abas Candidaturas e Escondidas
 
 const LEVEL_LABEL = { junior: 'Júnior', trainee: 'Trainee', estagio: 'Estágio', pleno: 'Pleno', senior: 'Sênior', 'nao-informado': 'Nível não informado' };
-const SRC_LABEL = { gupy: 'Gupy', linkedin: 'LinkedIn', infojobs: 'InfoJobs', glassdoor: 'Glassdoor', indeed: 'Indeed' };
+const SRC_LABEL = {
+  gupy: 'Gupy', linkedin: 'LinkedIn', infojobs: 'InfoJobs', glassdoor: 'Glassdoor', indeed: 'Indeed', solides: 'Sólides', catho: 'Catho',
+  empregoscombr: 'Empregos.com.br', vagascom: 'Vagas.com', bne: 'BNE', geekhunter: 'GeekHunter', programathor: 'Programathor',
+  remotar: 'Remotar', trampos: 'Trampos', '99jobs': '99jobs', apinfo: 'APInfo',
+};
 const EDU = {
   superior: ['Exige superior', 'bad'], medio: ['Ensino médio', 'good'], tecnico: ['Técnico', 'good'], 'medio-tecnico': ['Médio ou técnico', 'good'],
   'superior-opcional': ['Superior é só diferencial', 'info'], 'nao-menciona': ['Não cita escolaridade', ''],

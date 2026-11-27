@@ -6,7 +6,7 @@ Este é o branch `site`: a versão do Garimpo que é publicada sozinha no GitHub
 
 Abre no computador, no celular e na TV, sem instalar nada. Mostra vagas de dev júnior e concursos públicos de TI com filtros, em duas abas:
 
-- **Vagas:** Gupy, LinkedIn, InfoJobs, Glassdoor e Indeed
+- **Vagas:** Gupy, LinkedIn, InfoJobs, Glassdoor, Indeed, Sólides, Catho, Empregos.com.br, Vagas.com, BNE, GeekHunter, Programathor, Remotar, Trampos, 99jobs e APInfo
 - **Concursos:** PCI Concursos, Prefeitura de Porto Alegre, CIEE-RS e CIEE nacional (concursos, processos seletivos e estágios em órgãos públicos)
 
 A versão para rodar no próprio computador, com o botão **Atualizar vagas**, atualização automática e candidaturas salvas no computador, fica no branch `main`.
@@ -41,6 +41,12 @@ Sem login, o LinkedIn é buscado normalmente, só que algumas vagas aparecem com
 - Muda só uma vez por dia. Para vagas mais frescas, use a versão local (branch `main`).
 - Alguns sites bloqueiam os servidores do GitHub. Hoje o Indeed e o Glassdoor costumam vir como **bloqueado**; o aviso no site traz links para abrir a busca direto lá quando existem. As outras fontes seguem normalmente.
 - No PCI Concursos, escolaridade e salário valem para o concurso inteiro, não só para o cargo de TI.
+- O APInfo tem uma cota curta de consultas: quando esgota no meio, a fonte fica com o que já leu e com as vagas das últimas atualizações (até 30 dias). As vagas de lá abrem na página de busca, porque o link de cada vaga exige sessão.
+- Catho, Vagas.com, BNE, GeekHunter, Programathor, Trampos e 99jobs abrem a página de cada vaga nova para ler a descrição completa, com um limite por atualização; o resto entra na seguinte. Até lá a vaga aparece com o resumo da busca.
+- No BNE o título é só a função ("Desenvolvedor", "Programador"), então o nível quase sempre fica como não informado.
+- Na Catho o modelo de trabalho não vem nos dados; ele é deduzido da descrição.
+- Vagas de "Empresa confidencial" não são juntadas com outras de mesmo título, porque não dá para saber se são a mesma vaga.
+- Fora: Revelo (exige login), Mindsight (só tem a página de carreira de cada empresa, sem busca geral), Código Fonte (a seção de vagas acabou), TechRecruit e RocketJobs (nenhum site de vagas com esse nome no ar).
 - Nível, escolaridade e salário são deduzidos do texto da vaga e podem errar.
 
 ## Testes
