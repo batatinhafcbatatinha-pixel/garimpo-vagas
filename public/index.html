@@ -233,7 +233,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
   <div class="notice" id="notice" hidden></div>
 
   <aside class="filters" id="filters" aria-label="Filtros">
-    <h2>Filtros <button class="link" id="reset" title="Dev júnior, sem exigir superior, Porto Alegre ou remoto, sem vagas em inglês ou exclusivas PCD">Restaurar meu filtro</button></h2>
+    <h2>Filtros <button class="link" id="reset" title="Dev júnior, sem exigir superior, Porto Alegre ou remoto, sem vagas em inglês, exclusivas PCD ou exclusivas para mulheres">Restaurar meu filtro</button></h2>
 
     <div class="group">
       <h3>Site</h3>
@@ -281,6 +281,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
       <label class="switch"><input type="checkbox" id="soDev"><div>Só vagas de desenvolvimento / TI<small>Tira jovem aprendiz, vendas e afins que vêm junto nas buscas.</small></div></label>
       <label class="switch"><input type="checkbox" id="semIngles"><div>Esconder vagas em inglês<small>Descrição (ou título, quando não tem descrição) escrita em inglês.</small></div></label>
       <label class="switch"><input type="checkbox" id="semPcd"><div>Esconder vagas exclusivas PCD<small>Vagas afirmativas ou só para pessoas com deficiência.</small></div></label>
+      <label class="switch"><input type="checkbox" id="semMulheres"><div>Esconder vagas exclusivas para mulheres<small>Vagas afirmativas ou só para mulheres.</small></div></label>
       <label class="switch"><input type="checkbox" id="soNovas"><div>Só novas desde a última atualização</div></label>
       <div class="field"><label for="dias">Publicadas</label>
         <select id="dias"><option value="0">em qualquer data</option><option value="3">nos últimos 3 dias</option><option value="7">nos últimos 7 dias</option><option value="15">nos últimos 15 dias</option><option value="30">nos últimos 30 dias</option></select>
@@ -391,7 +392,7 @@ const { norm, parseQuery, matchesQuery } = JobSearch;
 // ---------- estado ----------
 const DEFAULTS = {
   q: '', local: ['poa', 'remoto'], nivel: ['junior'], fonte: null, // null = todos os sites
-  semSuperior: true, exigeMedioTecnico: false, comSalario: false, salMin: '', soDev: true, semIngles: true, semPcd: true, remotoConfirmado: true, soNovas: false, dias: '0', sort: 'recentes',
+  semSuperior: true, exigeMedioTecnico: false, comSalario: false, salMin: '', soDev: true, semIngles: true, semPcd: true, semMulheres: true, remotoConfirmado: true, soNovas: false, dias: '0', sort: 'recentes',
 };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -458,6 +459,7 @@ function passes(j, parsed, skip) {
   if (F.soDev && !j.isDev) return false;
   if (F.semIngles && j.isEnglish) return false;
   if (F.semPcd && j.pcdOnly) return false;
+  if (F.semMulheres && j.womenOnly) return false;
   if (F.semSuperior && j.edu.exigeSuperior) return false;
   if (F.exigeMedioTecnico && !(j.edu.medio || j.edu.tecnico)) return false;
   if (F.comSalario && !j.salary.informado) return false;
@@ -623,7 +625,7 @@ function syncControls() {
   if (TAB === 'vagas') { $('#q').value = F.q; $('#searchBox').classList.toggle('has', !!F.q); }
   for (const set of ['local', 'nivel']) document.querySelectorAll(`[data-set="${set}"] input`).forEach((i) => (i.checked = F[set].includes(i.value)));
   document.querySelectorAll('#fonteChips input').forEach((i) => (i.checked = !F.fonte || F.fonte.includes(i.value)));
-  for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'semIngles', 'semPcd', 'remotoConfirmado', 'soNovas']) $('#' + id).checked = F[id];
+  for (const id of ['semSuperior', 'exigeMedioTecnico', 'comSalario', 'soDev', 'semIngles', 'semPcd', 'semMulheres', 'remotoConfirmado', 'soNovas']) $('#' + id).checked = F[id];
   $('#salMin').value = F.salMin; $('#dias').value = F.dias; $('#sort').value = F.sort;
 }
 function changed() { for (const j of DATA.jobs) j._loc = locOf(j); shown = 40; store.set('garimpo.filtros', F); render(); }

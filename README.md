@@ -27,7 +27,7 @@ A versão para rodar no próprio computador, com o botão **Atualizar vagas**, a
 
 ## Filtros
 
-- Vagas: local (Porto Alegre, remoto Brasil, Grande POA, outros), nível, sem exigir ensino superior, cita ensino médio ou técnico, salário informado e valor mínimo, site, data de publicação, só novas, só desenvolvimento, sem vagas em inglês, sem vagas exclusivas PCD.
+- Vagas: local (Porto Alegre, remoto Brasil, Grande POA, outros), nível, sem exigir ensino superior, cita ensino médio ou técnico, salário informado e valor mínimo, site, data de publicação, só novas, só desenvolvimento, sem vagas em inglês, sem vagas exclusivas PCD, sem vagas exclusivas para mulheres.
 - Concursos: região, tipo, só área de TI, aceita ensino médio ou técnico, salário ou bolsa informado, só novos.
 
 A busca ignora acentos, trata "junior", "júnior" e "jr" como a mesma coisa, e buscar por júnior não traz vaga pleno ou sênior.
