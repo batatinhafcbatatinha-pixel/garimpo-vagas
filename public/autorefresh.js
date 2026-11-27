@@ -1,5 +1,5 @@
 // Atualização automática no modo local: de quanto em quanto tempo o site aperta "Atualizar vagas"
-// sozinho (enquanto a página estiver aberta). Funciona no navegador e no Node.
+// sozinho (enquanto a página estiver aberta) e se o F5 refaz a coleta. Funciona no navegador e no Node.
 (function (root) {
   // horas; 0 = desligado
   const OPTIONS = [
@@ -24,7 +24,14 @@
     return Math.max(0, due - (now == null ? Date.now() : +new Date(now)));
   }
 
-  const api = { OPTIONS, valid, autoRefreshDelay };
+  // "F5 refaz a coleta": só recarregar a página de verdade (não abrir pela primeira vez, nem
+  // voltar/avançar) dispara a coleta, e só se a opção estiver ligada e nada estiver rodando.
+  // `navType` é performance.getEntriesByType('navigation')[0].type.
+  function refreshOnReload(enabled, navType, running) {
+    return !!enabled && navType === 'reload' && !running;
+  }
+
+  const api = { OPTIONS, valid, autoRefreshDelay, refreshOnReload };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AutoRefresh = api;
 })(typeof window !== 'undefined' ? window : globalThis);

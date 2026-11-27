@@ -21,6 +21,10 @@ Abra http://localhost:4321 e clique em **Atualizar vagas** (leva uns 2 minutos).
 
 Ao lado do botão, **Auto** escolhe de quanto em quanto tempo o site atualiza sozinho: Desligado, 1 h, 3 h, 6 h, 12 h ou 24 h. Conta a partir da última atualização e usa as fontes escolhidas, igual ao botão. A escolha fica salva no navegador, e a atualização automática só roda enquanto o site estiver aberto em alguma aba.
 
+Ao lado, **F5 refaz a coleta**: ligado, recarregar a página (F5) faz uma atualização completa, em todas as fontes. Abrir o site pela primeira vez não dispara nada, e se já houver uma atualização rodando, o site só acompanha. Desligado, o F5 só recarrega a página. A escolha também fica salva no navegador.
+
+As vagas aparecem enquanto a atualização acontece: cada fonte que termina já entra na lista, e as fontes que ainda estão buscando continuam com as vagas da atualização anterior. No fim, a lista é a mesma de quando tudo termina.
+
 ## Filtros
 
 - Local: Porto Alegre, remoto Brasil, Grande POA, outros

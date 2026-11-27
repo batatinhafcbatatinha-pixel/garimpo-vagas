@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { OPTIONS, valid, autoRefreshDelay } = require('../public/autorefresh');
+const { OPTIONS, valid, autoRefreshDelay, refreshOnReload } = require('../public/autorefresh');
 
 const NOW = '2026-03-01T12:00:00.000Z';
 const H = 3600e3;
@@ -26,4 +26,13 @@ test('autoRefreshDelay: conta a partir da última atualização', () => {
 
 test('autoRefreshDelay: tentativa recente que falhou adia a próxima', () => {
   assert.equal(autoRefreshDelay(1, '2026-02-01T00:00:00.000Z', '2026-03-01T11:30:00.000Z', NOW), H / 2);
+});
+
+test('refreshOnReload: só F5 de verdade, com a opção ligada e sem coleta rodando', () => {
+  assert.equal(refreshOnReload(true, 'reload', false), true);
+  assert.equal(refreshOnReload(false, 'reload', false), false);
+  assert.equal(refreshOnReload(true, 'navigate', false), false); // primeira vez que abre
+  assert.equal(refreshOnReload(true, 'back_forward', false), false);
+  assert.equal(refreshOnReload(true, undefined, false), false);
+  assert.equal(refreshOnReload(true, 'reload', true), false); // já está atualizando
 });

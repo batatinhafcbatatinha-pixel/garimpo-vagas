@@ -62,6 +62,8 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 @keyframes spin { to { transform: rotate(360deg); } }
 .icon-btn { width: 44px; padding: 0; justify-content: center; }
 .auto { height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--muted); flex: none; }
+.auto input { margin: 0; accent-color: var(--accent); cursor: pointer; }
+#f5Box { padding-right: 12px; cursor: pointer; }
 .auto select { height: 34px; border: 0; background: none; color: var(--ink); font-weight: 600; cursor: pointer; }
 
 .tabs { display: flex; flex: none; background: var(--surface-2); border-radius: 12px; padding: 4px; }
@@ -254,6 +256,9 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
     <label class="auto" id="autoBox" title="Atualizar sozinho, com as fontes escolhidas, enquanto o site estiver aberto">
       <span>Auto</span>
       <select id="autoRefresh" aria-label="Atualizar automaticamente"></select>
+    </label>
+    <label class="auto" id="f5Box" title="Ligado: recarregar a página (F5) refaz a coleta em todas as fontes. Desligado: F5 só recarrega a página.">
+      <input type="checkbox" id="f5Refresh"><span>F5 refaz a coleta</span>
     </label>
   </div>
 </header>
@@ -822,16 +827,26 @@ async function poll() {
     $('#notice').textContent = 'Perdi a conexão com o servidor local. Confira se a janela do "Garimpo" continua aberta e recarregue a página.';
   } finally { polling = false; setBusy(false); }
 }
-async function startRefresh() {
-  if (polling) return;
+// `all` = coleta completa, em todas as fontes (F5); senão, só as fontes escolhidas
+let starting = false; // pedido de atualização a caminho (F5 e Auto juntos não pedem duas vezes)
+async function startRefresh(all = false) {
+  if (polling || starting) return;
   // lista vazia o servidor entende como "todas"; sem nada marcado, não atualiza
-  if (LAST_SOURCES && !Picked.ids().length) return;
+  if (!all && LAST_SOURCES && !Picked.ids().length) return;
+  starting = true;
   setBusy(true);
-  try { await fetch('/api/refresh', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sources: Picked.ids() }) }); } catch {}
+  try { await fetch('/api/refresh', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sources: all ? [] : Picked.ids() }) }); } catch {}
   await new Promise((r) => setTimeout(r, 300));
+  starting = false;
   poll();
 }
-$('#refresh').onclick = startRefresh;
+$('#refresh').onclick = () => startRefresh();
+
+// "F5 refaz a coleta": guardado neste navegador, junto com o intervalo do Auto
+const F5 = { on: !!store.get('garimpo.f5Coleta', false) };
+$('#f5Refresh').checked = F5.on;
+$('#f5Refresh').onchange = (e) => { F5.on = e.target.checked; store.set('garimpo.f5Coleta', F5.on); };
+const navType = () => { try { const n = performance.getEntriesByType('navigation')[0]; return n && n.type; } catch { return undefined; } };
 
 // endereço para abrir em outros aparelhos da mesma rede
 fetch('/api/info').then((r) => r.json()).then((info) => {
@@ -899,6 +914,8 @@ load().then(async () => {
   // se uma atualização já estiver rodando (ex.: página recarregada no meio), acompanha
   const st = await (await fetch('/api/status')).json();
   if (st.running) poll();
+  // F5 com a opção ligada: coleta completa (as vagas aparecem conforme cada fonte termina)
+  else if (AutoRefresh.refreshOnReload(F5.on, navType(), st.running)) startRefresh(true);
 });
 </script>
 </body>
