@@ -130,3 +130,24 @@ test('benefício com "por mês" não vira salário', () => {
   assert.equal(classifySalary('Vale alimentação de R$ 800 por mês').informado, false);
   assert.equal(classifySalary('Bolsa auxílio: R$ 1.200 por mês').min, 1200);
 });
+
+test('vagas exclusivas para mulheres', () => {
+  const { isWomenOnly } = require('../lib/classify');
+  // título
+  assert.equal(isWomenOnly('Analista de Desenvolvimento de Software Júnior - Vaga Afirmativa para Mulheres', ''), true);
+  assert.equal(isWomenOnly('Software Development Engineer Internship - Vaga para mulheres', ''), true);
+  assert.equal(isWomenOnly('Banco de talentos | Mulheres', ''), true);
+  assert.equal(isWomenOnly('Estágio em Engenharia de Dados - Para mulheres cis e trans', ''), true);
+  assert.equal(isWomenOnly('Desenvolvedora Front-end - Exclusiva Feminina', ''), true);
+  // descrição
+  assert.equal(isWomenOnly('Estágio | Engenharias', 'Atuação na Vale. *Vaga exclusiva para mulheres'), true);
+  assert.equal(isWomenOnly('Desenvolvedor Jr', 'Esta é uma posição afirmativa para mulheres, como parte do nosso compromisso.'), true);
+  assert.equal(isWomenOnly('Desenvolvedor Jr', 'Vaga destinada a pessoas do gênero feminino.'), true);
+  assert.equal(isWomenOnly('Developer', 'This position is open to women only.'), true);
+  // só cita mulheres, sem restringir
+  assert.equal(isWomenOnly('Desenvolvedor Back-end Jr', 'Incentivamos candidaturas de pessoas #pretas, #mulheres, #pcd, #lgbtqiapn+ e #50+.'), false);
+  assert.equal(isWomenOnly('Desenvolvedor Cobol', 'Somos a 2ª melhor empresa para mulheres e para pessoas pretas.'), false);
+  assert.equal(isWomenOnly('Estágio Front-end', 'Nossa missão é impactar pessoas, em especial mulheres, e inspirá-las.'), false);
+  assert.equal(isWomenOnly('Desenvolvedor', 'Temos o grupo Women in Experian e aderimos ao movimento Elas Lideram 2030 com a ONU Mulheres.'), false);
+  assert.equal(isWomenOnly('Desenvolvedor', 'Nossas vagas são abertas a todas as pessoas, inclusive mulheres.'), false);
+});

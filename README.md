@@ -33,6 +33,7 @@ As vagas aparecem enquanto a atualização acontece: cada fonte que termina já 
 - Obrigatório citar ensino médio ou técnico
 - Obrigatório informar o salário, com valor mínimo
 - Site, data de publicação, só vagas novas, só vagas de desenvolvimento
+- Esconder vagas em inglês, exclusivas PCD ou exclusivas para mulheres (as três vêm ligadas)
 
 A busca ignora acentos, trata "junior", "júnior" e "jr" como a mesma coisa, e buscar por júnior não traz vaga pleno ou sênior.
 
