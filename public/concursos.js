@@ -110,7 +110,8 @@
     document.querySelectorAll('#cFilters [data-ccount]').forEach(function (el) { el.textContent = counts[el.dataset.ccount] || 0; });
 
     var el = $('#cList');
-    if (!ALL.length) el.innerHTML = '<div class="empty"><h3>Nenhum concurso indexado ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar no PCI Concursos, Prefeitura de Porto Alegre e CIEE.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>';
+    if (!ALL.length && HOSTED) el.innerHTML = '<div class="empty"><h3>Nenhum concurso publicado ainda</h3><p>O site é atualizado sozinho uma vez por dia. Volte mais tarde.</p></div>';
+    else if (!ALL.length) el.innerHTML ='<div class="empty"><h3>Nenhum concurso indexado ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar no PCI Concursos, Prefeitura de Porto Alegre e CIEE.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>';
     else if (!list.length) el.innerHTML = '<div class="empty"><h3>Nada com esses filtros</h3><p>Tente incluir outros estados ou desligar “Só área de TI”.</p><button class="btn" onclick="Concursos.reset()">Restaurar filtro</button></div>';
     else el.innerHTML = list.slice(0, shown).map(card).join('');
     var rest = list.length - shown;
