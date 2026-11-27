@@ -2,10 +2,9 @@
   "name": "garimpo-vagas",
   "version": "1.0.0",
   "private": true,
-  "description": "Indexador local de vagas de dev júnior (Gupy, LinkedIn, InfoJobs, Glassdoor, Indeed)",
+  "description": "Garimpo publicado no GitHub Pages: vagas de dev júnior e concursos de TI, atualizados uma vez por dia",
   "scripts": {
-    "start": "node server.js",
-    "refresh": "node scripts/refresh-cli.js",
+    "build": "node scripts/build-pages.js",
     "test": "node --test"
   }
 }
