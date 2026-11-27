@@ -24,7 +24,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # o código do site publicado fica no branch "site"; este arquivo fica no main porque
+      # o GitHub só dispara o agendamento a partir do branch padrão
       - uses: actions/checkout@v7
+        with:
+          ref: site
       - uses: actions/setup-node@v7
         with:
           node-version: 24

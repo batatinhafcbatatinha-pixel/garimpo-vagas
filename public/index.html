@@ -63,7 +63,6 @@ h1, h2, h3 { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; m
 .icon-btn { width: 44px; padding: 0; justify-content: center; }
 .auto { height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--muted); flex: none; }
 .auto select { height: 34px; border: 0; background: none; color: var(--ink); font-weight: 600; cursor: pointer; }
-.auto[hidden] { display: none; }
 
 .tabs { display: flex; flex: none; background: var(--surface-2); border-radius: 12px; padding: 4px; }
 .tabs button { border: 0; background: none; height: 36px; padding: 0 14px; border-radius: 9px; font-weight: 600; color: var(--muted); }
@@ -226,7 +225,7 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
 <body>
 <header class="top">
   <div class="top-in">
-    <a class="brand" href="./" aria-label="Garimpo">
+    <a class="brand" href="/" aria-label="Garimpo">
       <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M4 19 12 5l8 14z"/></svg></span><b>Garimpo</b>
     </a>
     <div class="tabs" role="tablist" aria-label="Seções">
@@ -248,11 +247,11 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
       <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
       <span id="stopLabel">Parar</span>
     </button>
-    <button class="btn primary" id="refresh" hidden>
+    <button class="btn primary" id="refresh">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
       <span id="refreshLabel">Atualizar vagas</span>
     </button>
-    <label class="auto" id="autoBox" hidden title="Atualizar sozinho, com as fontes escolhidas, enquanto o site estiver aberto">
+    <label class="auto" id="autoBox" title="Atualizar sozinho, com as fontes escolhidas, enquanto o site estiver aberto">
       <span>Auto</span>
       <select id="autoRefresh" aria-label="Atualizar automaticamente"></select>
     </label>
@@ -431,7 +430,6 @@ html.no-gap .brand > *, html.no-gap .btn > *, html.no-gap .src > *, html.no-gap 
 })();
 </script>
 <script src="search.js"></script>
-<script src="marks.js"></script>
 <script src="autorefresh.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
@@ -450,30 +448,14 @@ let F = { ...DEFAULTS, ...store.get('garimpo.filtros', {}) };
 let DATA = { jobs: [], sources: [], updatedAt: null, previousUpdate: null };
 let shown = 40;
 
-// Modo publicado (GitHub Pages): sem servidor, as vagas vêm de jobs.json e não há botão de atualizar.
-// Descoberto em load(): se /api/jobs não responde, é o site publicado.
-let HOSTED = false;
-
-// Marcas nas vagas: id -> { at, kind: 'vaga' | 'concurso', item }.
-// No modo local ficam salvas no servidor e valem em todos os aparelhos; no site publicado,
-// no localStorage deste navegador (`lsKey`).
+// Marcas nas vagas: id -> { at, kind: 'vaga' | 'concurso', item }. Salvas no servidor, valem em todos os aparelhos.
 // Candidaturas ("já me candidatei") e Escondidas ("esconder"): saem das abas Vagas e Concursos.
-function marks(key, lsKey) {
+function marks(key) {
   const M = {
     key, map: {},
     has: (id) => Object.prototype.hasOwnProperty.call(M.map, id),
     day: (id) => new Date(M.map[id].at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    loadLocal() { try { M.map = JobMarks.parseMarks(localStorage.getItem(lsKey)); } catch { M.map = {}; } },
     async toggle(id) {
-      if (HOSTED) {
-        const map = JobMarks.toggleMark(M.map, id, !M.has(id), DATA);
-        if (!map) return;
-        try { localStorage.setItem(lsKey, JSON.stringify(map)); }
-        catch { alert('Não consegui salvar neste navegador (o armazenamento do site pode estar cheio ou bloqueado).'); return; }
-        M.map = map;
-        render(); Concursos.render(); renderMarked();
-        return;
-      }
       try {
         const r = await fetch('/api/' + key, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, [key]: !M.has(id) }) });
         if (!r.ok) throw new Error(r.status);
@@ -487,8 +469,8 @@ function marks(key, lsKey) {
   };
   return M;
 }
-const Applied = marks('applied', 'garimpo.candidaturas');
-const Hidden = marks('hidden', 'garimpo.escondidas');
+const Applied = marks('applied');
+const Hidden = marks('hidden');
 const MQ = { candidaturas: '', escondidas: '' }; // busca dentro das abas Candidaturas e Escondidas
 
 const LEVEL_LABEL = { junior: 'Júnior', trainee: 'Trainee', estagio: 'Estágio', pleno: 'Pleno', senior: 'Sênior', 'nao-informado': 'Nível não informado' };
@@ -610,9 +592,7 @@ function render() {
   if (fromSearch) hint.textContent = `Nível definido pela busca: só ${parsed.levels.map((l) => LEVEL_LABEL[l].toLowerCase()).join(' ou ')}.`;
 
   const el = $('#list');
-  if (!DATA.jobs.length && HOSTED) {
-    el.innerHTML = '<div class="empty"><h3>Nenhuma vaga publicada ainda</h3><p>O site é atualizado sozinho uma vez por dia. Volte mais tarde.</p></div>';
-  } else if (!DATA.jobs.length) {
+  if (!DATA.jobs.length) {
     el.innerHTML = `<div class="empty"><h3>Nenhuma vaga indexada ainda</h3><p>Clique em <b>Atualizar vagas</b> para buscar vagas (Gupy, LinkedIn, InfoJobs, Glassdoor) e concursos. Leva uns 2 minutos.</p><button class="btn primary" onclick="startRefresh()">Atualizar vagas</button></div>`;
   } else if (!list.length) {
     el.innerHTML = `<div class="empty"><h3>Nada com esses filtros</h3><p>Tente desligar um dos filtros obrigatórios ou incluir o nível “Não diz”.</p><button class="btn" onclick="resetFilters()">Restaurar meu filtro</button></div>`;
@@ -697,13 +677,8 @@ document.addEventListener('click', (e) => {
 });
 const fmtWhen = (iso) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 function renderSourcesInto(wrap, n, sources, running) {
-  const txtOf = (s) => (s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? String(s.count) : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : s.status === 'parado' ? 'parado' : '—');
-  if (HOSTED) {
-    // site publicado: as fontes só mostram como foi a última atualização diária
-    wrap.innerHTML = sources.map((s) => `<span class="src ${s.status}" title="${esc(s.message || '')}"><i></i><b>${esc(s.name)}</b><span>${esc(txtOf(s))}</span></span>`).join('')
-      + `<span class="updated">${DATA.updatedAt ? 'Atualizado em ' + fmtWhen(DATA.updatedAt) + ' · atualiza sozinho uma vez por dia' : 'Ainda não atualizado'}</span>`;
-  } else wrap.innerHTML = sources.map((s) => {
-    const txt = txtOf(s);
+  wrap.innerHTML = sources.map((s) => {
+    const txt = s.status === 'buscando' ? (s.message || 'buscando…') : s.status === 'ok' ? String(s.count) : s.status === 'bloqueado' ? 'bloqueado' : s.status === 'erro' ? 'falhou' : s.status === 'parado' ? 'parado' : '—';
     const on = Picked.has(s.id);
     const tip = (on ? 'Entra na próxima atualização. Clique para tirar.' : 'Fora da próxima atualização. Clique para incluir.') + (s.message ? ' · ' + s.message : '');
     return `<button type="button" class="src ${s.status}${on ? ' sel' : ''}" data-src="${esc(s.id)}" aria-pressed="${on}" title="${esc(tip)}"><i></i><b>${esc(s.name)}</b><span>${esc(txt)}</span></button>`;
@@ -792,45 +767,14 @@ if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 <script src="concursos.js"></script>
 <script>
 // ---------- dados ----------
-// Modo local: vagas e marcas vêm do servidor (/api/jobs). Site publicado: não há /api, as vagas
-// vêm de jobs.json, gerado uma vez por dia pelo GitHub Actions (com "hosted": true).
-let MODE_KNOWN = false;
-async function fetchData() {
-  if (!HOSTED) {
-    try {
-      const r = await fetch('/api/jobs', { cache: 'no-store' });
-      if (r.ok && /json/.test(r.headers.get('content-type') || '')) { const d = await r.json(); setMode(false); return d; }
-    } catch {}
-    if (MODE_KNOWN) throw new Error('servidor local fora do ar');
-  }
-  const d = await (await fetch('jobs.json', { cache: 'no-cache' })).json();
-  setMode(true);
-  return d;
-}
-function setMode(hosted) {
-  if (MODE_KNOWN) return;
-  MODE_KNOWN = true; HOSTED = hosted;
-  document.documentElement.classList.toggle('hosted', hosted);
-  $('#refresh').hidden = hosted;
-  $('#autoBox').hidden = hosted;
-  if (hosted) {
-    $('#foot').textContent = 'Candidaturas e vagas escondidas ficam salvas só neste navegador.';
-    // outra aba do mesmo navegador mudou as marcas
-    addEventListener('storage', (e) => {
-      if (e.key !== 'garimpo.candidaturas' && e.key !== 'garimpo.escondidas') return;
-      Applied.loadLocal(); Hidden.loadLocal(); render(); Concursos.render(); renderMarked();
-    });
-  } else startLocalExtras();
-}
-
 // `st` = status de uma atualização em andamento: mostra as vagas que já chegaram sem mexer no resto da tela.
 async function load(st) {
   // detalhes abertos continuam abertos depois de redesenhar
   const idOf = (d) => { const b = d.closest('article').querySelector('[data-apply],[data-hide]'); return b && (b.dataset.apply || b.dataset.hide); };
   const open = new Set([...document.querySelectorAll('details.more[open]')].map(idOf));
-  DATA = await fetchData();
-  if (HOSTED) { Applied.loadLocal(); Hidden.loadLocal(); }
-  else { Applied.map = DATA.applied || {}; Hidden.map = DATA.hidden || {}; }
+  DATA = await (await fetch('/api/jobs')).json();
+  Applied.map = DATA.applied || {};
+  Hidden.map = DATA.hidden || {};
   for (const j of DATA.jobs) { j._text = norm(j.title + ' ' + j.company); j._loc = locOf(j); }
   $('#fonteChips').innerHTML = DATA.sources.filter((s) => s.kind !== 'concursos').map((s) => `<label class="chip"><input type="checkbox" value="${s.id}"><span>${esc(s.name)} <small data-count="src-${s.id}"></small></span></label>`).join('');
   syncControls();
@@ -889,15 +833,10 @@ async function startRefresh() {
 }
 $('#refresh').onclick = startRefresh;
 
-// Só no modo local: endereço na rede, login do LinkedIn e atualização automática.
-function startLocalExtras() {
-  // endereço para abrir em outros aparelhos da mesma rede
-  fetch('/api/info').then((r) => r.json()).then((info) => {
-    if (info.urls.length) $('#foot').innerHTML = 'Para abrir no celular ou na TV (mesma rede Wi-Fi): ' + info.urls.map((u) => '<b>' + esc(u) + '</b>').join(' ou ');
-  }).catch(() => {});
-  liRefresh();
-  Auto.start();
-}
+// endereço para abrir em outros aparelhos da mesma rede
+fetch('/api/info').then((r) => r.json()).then((info) => {
+  if (info.urls.length) $('#foot').innerHTML = 'Para abrir no celular ou na TV (mesma rede Wi-Fi): ' + info.urls.map((u) => '<b>' + esc(u) + '</b>').join(' ou ');
+}).catch(() => {});
 
 // Atualização automática: aperta "Atualizar vagas" sozinho no intervalo escolhido (guardado neste
 // navegador), contando da última atualização. Só roda enquanto o site estiver aberto.
@@ -953,9 +892,10 @@ async function liSend(cookie) {
 $('#liSave').onclick = () => { const v = $('#liCookie').value.trim(); if (v) liSend(v); else $('#liMsg').textContent = 'Cole o valor do cookie li_at.'; };
 $('#liOff').onclick = () => liSend('');
 $('#liClose').onclick = () => $('#liDlg').close();
+liRefresh();
 
 load().then(async () => {
-  if (HOSTED) return;
+  Auto.start();
   // se uma atualização já estiver rodando (ex.: página recarregada no meio), acompanha
   const st = await (await fetch('/api/status')).json();
   if (st.running) poll();
